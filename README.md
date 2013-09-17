@@ -20,3 +20,9 @@ http://godoc.org/github.com/gophersjp/go/tools/cmd/vet
 ## ライセンス
 
 本家 http://golang.org/ https://code.google.com/p/go に従います。
+
+
+## 参加者募集!
+
+
+
