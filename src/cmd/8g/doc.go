@@ -4,10 +4,12 @@
 
 /*
 
-8g is the version of the gc compiler for the x86.
-The $GOARCH for these tools is 386.
+8gはx86用のgcコンパイラです。
+このツールの$GOARCHは386です。
 
-It reads .go files and outputs .8 files. The flags are documented in ../gc/doc.go.
+これは.goファイルを読み込み、.8ファイルを出力します。このコマンドのフラグについては ../gc/doc.go を参照してください。
 
+
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/src/cmd/8g/doc.go?r=3633a89bb56d9276a9fe55435b849f931bfa6393
 */
 package main
