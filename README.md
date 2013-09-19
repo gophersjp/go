@@ -9,7 +9,7 @@ http://godoc.org/github.com/gophersjp/go
 * http://godoc.org/ で閲覧できる形式を目指す
 * 自然なディレクトリ構成でたどれるようにする(本家に従う)
 * 翻訳時点での本家のリポジトリのチェンジ番号を含んだURLをドキュメントの最後に含める 
-* import文を利用して本体へリンクする
+* import文を利用して本体へリンクする(importできないものは要らない)
 * 翻訳は本家の文章の内容にできるだけ従う
 * 誰でも翻訳に参加できるようにする(PullRequestでも可)
 * tip版を翻訳する
@@ -18,6 +18,8 @@ http://godoc.org/github.com/gophersjp/go
 
 tools/cmd/vet/doc.go
 http://godoc.org/github.com/gophersjp/go/tools/cmd/vet
+
+詳細はwikiを御覧ください。
 
 ## ライセンス
 
