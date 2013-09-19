@@ -12,6 +12,7 @@ http://godoc.org/github.com/gophersjp/go
 * import文を利用して本体へリンクする
 * 翻訳は本家の文章の内容にできるだけ従う
 * 誰でも翻訳に参加できるようにする(PullRequestでも可)
+* tip版を翻訳する
 
 例:
 
