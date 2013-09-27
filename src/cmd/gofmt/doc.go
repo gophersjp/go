@@ -3,92 +3,90 @@
 // license that can be found in the LICENSE file.
 
 /*
-Gofmt formats Go programs.
+gofmtはGoのソースコードをフォーマット（整形）するツールです。
 
-Without an explicit path, it processes the standard input.  Given a file,
-it operates on that file; given a directory, it operates on all .go files in
-that directory, recursively.  (Files starting with a period are ignored.)
-By default, gofmt prints the reformatted sources to standard output.
+パスを与えない場合、標準入力の内容を処理します。
+ディレクトリを指定した場合は、すべての .go ファイルを再帰的に処理します
+（ただし、"."ドットではじまるファイルは無視します）。
+通常、gofmtは標準出力へフォーマットしたコードを表示します。
 
 Usage:
         gofmt [flags] [path ...]
 
 The flags are:
         -d
-                Do not print reformatted sources to standard output.
-                If a file's formatting is different than gofmt's, print diffs
-                to standard output.
+                フォーマットした内容を標準出力へ出力しません。
+                もしファイルのフォーマットがgofmtに通したものと異なる場合は、
+                diffを標準出力します。
         -e
-                Print all (including spurious) errors.
+                すべてのエラーを表示します。
         -l
-                Do not print reformatted sources to standard output.
-                If a file's formatting is different from gofmt's, print its name
-                to standard output.
+                フォーマットした内容を標準出力へ出力しません。
+                もしファイルのフォーマットがgofmtに通したものと異なる場合は、
+                そのファイル名を標準出力します。
         -r rule
-                Apply the rewrite rule to the source before reformatting.
+                再フォーマット前のソースコードへ置き換えルールを指定します。
+                （Exampleを参照）
         -s
-                Try to simplify code (after applying the rewrite rule, if any).
+                置き換えルールを適用した後、もしあれば、コードの簡素化を試みます。
         -w
-                Do not print reformatted sources to standard output.
-                If a file's formatting is different from gofmt's, overwrite it
-                with gofmt's version.
+                フォーマットした内容を標準出力へ出力しません。
+                もしファイルのフォーマットがgofmtに通したものと異なる場合は、
+                gofmtのもので上書き保存します。
 
 Formatting control flags:
         -comments=true
-                Print comments; if false, all comments are elided from the output.
+                コメント内容を含めます。falseを指定すると、すべてのコメントが省略されます。
         -tabs=true
-                Indent with tabs; if false, spaces are used instead.
+                タブでインデントします。falseを指定すると、スペースが使われます。
         -tabwidth=8
-                Tab width in spaces.
+                スペースでのタブ幅を指定します。
 
 
-The rewrite rule specified with the -r flag must be a string of the form:
+置き換えルールは -r フラグ以下の形式の文字列を次のように指定する必要があります:
 
         pattern -> replacement
 
-Both pattern and replacement must be valid Go expressions.
-In the pattern, single-character lowercase identifiers serve as
-wildcards matching arbitrary sub-expressions; those expressions
-will be substituted for the same identifiers in the replacement.
+patternとreplacementの両方は、Goの文法に従っている必要があります。
+patternで、小文字の1字はsub-expressionsのワイルドカードとして活用できますので、
+replacementで同じ文字へと置換できます。
 
-When gofmt reads from standard input, it accepts either a full Go program
-or a program fragment.  A program fragment must be a syntactically
-valid declaration list, statement list, or expression.  When formatting
-such a fragment, gofmt preserves leading indentation as well as leading
-and trailing spaces, so that individual sections of a Go program can be
-formatted by piping them through gofmt.
+gofmtが標準入力から読む場合、Goプログラムの全体か、プログラムの断片のどちらかで受け付けます。
+プログラムの断片では、構文的に有効な宣言リスト、ステートメントリスト、式である必要があります。
+そのような断片をフォーマットする場合、gofmtは先頭のインデントと末尾のスペースを保持します。
+ですので、Goプログラムの個々ののセクションでgofmtを通してフォーマットすることができます。
 
 Examples
 
-To check files for unnecessary parentheses:
+余計な括弧のペアが付いているファイルを確認する:
 
         gofmt -r '(a) -> a' -l *.go
 
-To remove the parentheses:
+余計な括弧のペアを削除する:
 
         gofmt -r '(a) -> a' -w *.go
 
-To convert the package tree from explicit slice upper bounds to implicit ones:
+明示的なスライスサイズの指定から暗黙的なものへパッケージツリー全体を変換する:
 
         gofmt -r 'α[β:len(α)] -> α[β:]' -w $GOROOT/src/pkg
 
 The simplify command
 
-When invoked with -s gofmt will make the following source transformations where possible.
+gofmt -sで起動すると、以下のような変換が可能な場合があります。
 
-        An array, slice, or map composite literal of the form:
+        配列、スライスやマップの複合したもの:
                 []T{T{}, T{}}
-        will be simplified to:
+        を簡素化すると:
                 []T{{}, {}}
 
-        A slice expression of the form:
+        スライス:
                 s[a:len(s)]
-        will be simplified to:
+        を簡素化すると:
                 s[a:]
 
-        A range of the form:
+        range:
                 for x, _ = range v {...}
-        will be simplified to:
+        を簡素化すると:
                 for x = range v {...}
 
 本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/src/cmd/gofmt/doc.go?r=6152955fc7819180f4fac15eee678407df87da0a
