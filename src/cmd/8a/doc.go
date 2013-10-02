@@ -4,12 +4,12 @@
 
 /*
 
-8a��Plan 9�p�̃A�Z���u���ł��B���̃h�L�������g�ɂ��Ă͈ȉ����Q�Ƃ��Ă��������B
+8aはPlan 9用のアセンブラです。元のドキュメントについては以下を参照してください。
 
 	http://plan9.bell-labs.com/magic/man2html/1/8a
 
-x86�A�[�L�e�N�`�����^�[�Q�b�g�Ƃ��Ă���A�����̃c�[���ɂ͗��j�I�ȗ��R����386�Ƃ��ĎQ�Ƃ���܂��B
+x86アーキテクチャをターゲットとしており、これらのツールには歴史的な理由から386として参照されます。
 
-�{�h�L�������g�͈ȉ��̃h�L�������g��|�󂵂Ă��܂�: https://code.google.com/p/go/source/browse/src/cmd/8a/doc.go?r=3633a89bb56d
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/src/cmd/8a/doc.go?r=3633a89bb56d
 */
 package main

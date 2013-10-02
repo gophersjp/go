@@ -4,11 +4,11 @@
 
 /*
 
-5l��ARM�p�̃����J�ł��B
-���̃c�[����$GOARCH��arm�ł��B
+5lはARM用のリンカです。
+このツールの$GOARCHはarmです。
 
-���̃R�}���h�̃t���O�ɂ��Ă� ../ld/doc.go ���Q�Ƃ��Ă��������B
+このコマンドのフラグについては ../ld/doc.go を参照してください。
 
-�{�h�L�������g�͈ȉ��̃h�L�������g��|�󂵂Ă��܂�:https://code.google.com/p/go/source/browse/src/cmd/5l/doc.go?r=3633a89bb56d
+本ドキュメントは以下のドキュメントを翻訳しています:https://code.google.com/p/go/source/browse/src/cmd/5l/doc.go?r=3633a89bb56d
 */
 package main

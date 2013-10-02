@@ -4,12 +4,12 @@
 
 /*
 
-6c��Plan 9�p��C�R���p�C���ł��B���̃h�L�������g�ɂ��Ă͈ȉ����Q�Ƃ��Ă��������B
+6cはPlan 9用のCコンパイラです。元のドキュメントについては以下を参照してください。
 
 	http://plan9.bell-labs.com/magic/man2html/1/8c
 
-x86-64�A�[�L�e�N�`�����^�[�Q�b�g�Ƃ��Ă���A�����̃c�[���ɂ�amd64�Ƃ��ĎQ�Ƃ���܂��B
+x86-64アーキテクチャをターゲットとしており、これらのツールにはamd64として参照されます。
 
-�{�h�L�������g�͈ȉ��̃h�L�������g��|�󂵂Ă��܂�: https://code.google.com/p/go/source/browse/src/cmd/6c/doc.go?r=3633a89bb56d
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/src/cmd/6c/doc.go?r=3633a89bb56d
 */
 package main

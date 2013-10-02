@@ -4,11 +4,11 @@
 
 /*
 
-8l��32bit x86�p�̃����J�ł��B
-���̃c�[����$GOARCH��386�ł��B
+8lは32bit x86用のリンカです。
+このツールの$GOARCHは386です。
 
-���̃R�}���h�̃t���O�ɂ��Ă� ../ld/doc.go ���Q�Ƃ��Ă��������B
+このコマンドのフラグについては ../ld/doc.go を参照してください。
 
-�{�h�L�������g�͈ȉ��̃h�L�������g��|�󂵂Ă��܂�:https://code.google.com/p/go/source/browse/src/cmd/8l/doc.go?r=3633a89bb56d
+本ドキュメントは以下のドキュメントを翻訳しています:https://code.google.com/p/go/source/browse/src/cmd/8l/doc.go?r=3633a89bb56d
 */
 package main
