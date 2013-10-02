@@ -4,33 +4,34 @@
 
 /*
 
-Godoc extracts and generates documentation for Go programs.
+godocはGoのソースコードからドキュメントを生成します。
 
-It has two modes.
+2つのモデルがあります。
 
-Without the -http flag, it runs in command-line mode and prints plain text
-documentation to standard output and exits. If both a library package and
-a command with the same name exists, using the prefix cmd/ will force
-documentation on the command rather than the library package. If the -src
-flag is specified, godoc prints the exported interface of a package in Go
-source form, or the implementation of a specific exported language entity:
+-httpフラグをつけずに起動すると、コマンドラインモードで実行し、標準出力へテキストの
+ドキュメントを表示、終了します。
+もしライブラリパッケージとコマンドで同じ名前になっている場合は、ライブラリパッケージ
+よりも cmd/ ではじまるコマンドドキュメントを優先します。
+-srcフラグが指定されると、godocはGoのソースコード形式でパッケージのエクスポートされた
+インターフェースや、個別のエクスポートされたものの実装を表示します:
 
-        godoc fmt                # documentation for package fmt
-        godoc fmt Printf         # documentation for fmt.Printf
-        godoc cmd/go             # force documentation for the go command
-        godoc -src fmt           # fmt package interface in Go source form
-        godoc -src fmt Printf    # implementation of fmt.Printf
+        godoc fmt                # fmtパッケージをドキュメンテーションします
+        godoc fmt Printf         # fmt.Printfをドキュメンテーションします
+        godoc cmd/go             # goコマンドをforce強制的にドキュメンテーションします
+        godoc -src fmt           # Goのソースコード形式で、fmtパッケージを表示します
+        godoc -src fmt Printf    # fmt.Printfの実装を表示します
 
-In command-line mode, the -q flag enables search queries against a godoc running
-as a webserver. If no explicit server address is specified with the -server flag,
-godoc first tries localhost:6060 and then http://golang.org.
+-qフラグに検索クエリを指定することで、
+ウェブサーバに対して検索結果を問い合わせることができます（コマンドラインモード時）。
+サーバアドレスを-serverフラグで指定しなかった場合、godocは最初に localhost:6060
+に接続を試み、次に http://golang.org へ接続します。
 
         godoc -q Reader
         godoc -q math.Sin
         godoc -server=:6060 -q sin
 
-With the -http flag, it runs as a web server and presents the documentation as a
-web page.
+-httpフラグをつけて起動すると、ウェブサーバ(localhost:6060)が起動し、ウェブページでドキュメントを読むことができます。
+（-httpフラグにはポート番号を以下のように指定します）
 
         godoc -http=:6060
 
@@ -41,13 +42,13 @@ The flags are:
         -v
                 verbose mode
         -q
-                arguments are considered search queries: a legal query is a
-                single identifier (such as ToLower) or a qualified identifier
-                (such as math.Sin).
+                引数に検索クエリを指定します。
+                有効なクエリの例は、単なる名称（ToLowerといったもの）
+                や、限定した名称（math.Sinといったもの）です。
         -src
-                print (exported) source in command-line mode
+                ソースコード（エクスポートされたもの）をコマンドラインモードで表示します。
         -tabwidth=4
-                width of tabs in units of spaces
+                タブ幅をスペースの数で指定します。
         -timestamps=true
                 show timestamps with directory listings
         -index
@@ -73,13 +74,13 @@ The flags are:
                 regular expression matching note markers to show
                 (e.g., "BUG|TODO", ".*")
         -html
-                print HTML in command-line mode
+                コマンドラインモードでHTMLを表示します。
         -goroot=$GOROOT
-                Go root directory
+                Goのルートディレクトリを指定します。
         -http=addr
-                HTTP service address (e.g., '127.0.0.1:6060' or just ':6060')
+                HTTPサービスのアドレスを指定します (例: '127.0.0.1:6060' または ':6060')
         -server=addr
-                webserver address for command line searches
+                コマンドラインサーチでのサーバアクセス先を指定します。
         -templates=""
                 directory containing alternate template files; if set,
                 the directory may provide alternative template files
@@ -90,31 +91,37 @@ The flags are:
         -zip=""
                 zip file providing the file system to serve; disabled if empty
 
-By default, godoc looks at the packages it finds via $GOROOT and $GOPATH (if set).
-This behavior can be altered by providing an alternative $GOROOT with the -goroot
-flag.
+godocは、環境変数 $GOROOT と $GOPATH （設定してあれば）を見てパッケージを検索します。
+この動作は、 -gorootフラグで $GOROOT を変えることで変更することができます。
 
-When godoc runs as a web server and -index is set, a search index is maintained.
-The index is created at startup.
+godocをウェブサーバとして実行する際に -index がセットされると、サーチインデックスを保有します。
+インデックスは起動時に生成されます。
 
-The index contains both identifier and full text search information (searchable
-via regular expressions). The maximum number of full text search results shown
-can be set with the -maxresults flag; if set to 0, no full text results are
-shown, and only an identifier index but no full text search index is created.
+インデックスは、名称とフルテキストのサーチの情報（正規表現で検索できます）を含んでいます。
+フルテキストサーチの結果を表示する限度は -maxresultsフラグで指定できます。
+もし 0 を指定するとフルテキストサーチの結果は表示されません。
+インデックスは名称のみとなり、フルテキストサーチのインデックスは生成されません。
 
-The presentation mode of web pages served by godoc can be controlled with the
-"m" URL parameter; it accepts a comma-separated list of flag names as value:
+godocが提供するウェブページのプレゼンテーションモードは、 URLパラメータに"m"でコントロールできます。
+これは、コンマ区切りのリストを受け付けます。
 
-        all     show documentation for all declarations, not just the exported ones
-        methods show all embedded methods, not just those of unexported anonymous fields
-        src     show the original source code rather then the extracted documentation
-        text    present the page in textual (command-line) form rather than HTML
-        flat    present flat (not indented) directory listings using full paths
+        all     エクスポートされたものだけではなく、宣言されたすべてのドキュメントを表示します
+        methods エクスポートしていない匿名フィールドだけでなく、すべての組み込みメソッドを表示します TODO:動作確認
+                show all embedded methods, not just those of unexported anonymous fields
+        src     ドキュメントではなく、その元のソースコードを表示します
+        text    HTMLではなく、テキストフォーマット（コマンドライン用）で提供します
+        flat    パッケージ表示を階層ではなく、フルパスを用いたフラット（インデントのない）なリストで提供します
 
+例えば、 http://golang.org/pkg/math/big/?m=all を見ると、bigパッケージで宣言されたすべて（エクスポートされていないものも）のドキュメントを見ることができます。 
+TODO: "godoc -src math/big .*" で意図したとおりにならないのはなんで？？
 For instance, http://golang.org/pkg/math/big/?m=all,text shows the documentation
 for all (not just the exported) declarations of package big, in textual form (as
 it would appear when using godoc from the command line: "godoc -src math/big .*").
 
+通常、godocは、基盤となっているOSのファイルシステムからファイルを提供します。
+代わりに -zipフラグで .zip ファイルから提供することもできます。
+ファイルパスは .zipファイルで保持され、パスセパレータとしてスラッシュ ('/') を使う必要があり、
+それらはルートを ... ? TODO:動作確認 zipコマンドの使い方あってる？
 By default, godoc serves files from the file system of the underlying OS.
 Instead, a .zip file may be provided via the -zip flag, which contains
 the file system to serve. The file paths stored in the .zip file must use
