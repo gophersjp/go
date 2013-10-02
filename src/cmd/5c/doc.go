@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build ignore
-
 /*
 
 5cはPlan 9用のCコンパイラです。元のドキュメントについては以下を参照してください。
