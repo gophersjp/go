@@ -32,19 +32,17 @@ named list.  By default fix considers all known rewrites.  Fix's
 rewrites are idempotent, so that it is safe to apply fix to updated
 or partially updated code even without using the -r flag.
 -rフラグは指定されたリストの書き換えを禁止します。デフォルト設定では、fixは書き換えが必要な全てについて考慮します。
-// FIXME
-fixの書き換えは冪等(べきとう)です。そのため-rフラグさえ使わずに、更新されたコード、もしくは部分的に更新されたコードにfixを適用することは安全です。
+fixの書き換えは冪等(べきとう)です。そのため-rフラグを使用しなかったとしても、全部もしくは一部の更新されたコードへのfix適用の安全性は保証されます。
 
 Fix prints the full list of fixes it can apply in its help output;
 to see them, run go tool fix -?.
-// FIXME
-fixはヘルプ出力に適用できる全ての修正リストを表示します。
+fixはヘルプ出力に適用できる修正の全リストを表示します。
 それらを見るには、`go tool fix -?`を実行してください。
 
 Fix does not make backup copies of the files that it edits.
 Instead, use a version control system's ``diff'' functionality to inspect
 the changes that fix makes before committing them.
-fixは編集されたファイルのバックアップを作成しません。
+fixは編集するファイルのバックアップを作成しません。
 コミットする前にfixによる変更を確認するには、バージョン管理システムの``diff''機能を使ってください。
 
 本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/src/cmd/fix/doc.go?r=3633a89bb56d
