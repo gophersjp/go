@@ -1,4 +1,4 @@
-# golang
+# golang [![Build Status](https://travis-ci.org/gophersjp/go.png)](https://travis-ci.org/gophersjp/go)
 
 日本語ドキュメントはこちら:
 http://godoc.org/github.com/gophersjp/go
