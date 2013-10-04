@@ -135,10 +135,13 @@ one may run godoc as follows:
 
         godoc -http=:6060 -zip=go.zip -goroot=$HOME/go
 
-See "Godoc: documenting Go code" for how to write good comments for godoc:
-http://golang.org/doc/articles/godoc_documenting_go_code.html
+godocのドキュメンテーションは go/docパッケージでHTMLやテキストへ変換されます。
+フォーマットの詳細は http://golang.org/pkg/go/doc/#ToHTML を御覧ください。
 
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/cmd/godoc/doc.go?repo=tools&r=3504d66cc4b60e42aa0e0c2ced58afb0f1a8cc82
+コメントの良い書き方については、 "Godoc: documenting Go code" 
+http://golang.org/doc/articles/godoc_documenting_go_code.html を御覧ください。
+
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/cmd/godoc/doc.go?repo=tools&r=0e399fef76b7c34144d51e7b64c6da5b5591ea51
 
 */
 package main
