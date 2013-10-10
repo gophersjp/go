@@ -112,7 +112,7 @@ godocが提供するウェブページのプレゼンテーションモードは
         text    HTMLではなく、テキストフォーマット（コマンドライン用）で提供します
         flat    パッケージ表示を階層ではなく、フルパスを用いたフラット（インデントのない）なリストで提供します
 
-例えば、 http://golang.org/pkg/math/big/?m=all を見ると、bigパッケージで宣言されたすべて（エクスポートされていないものも）のドキュメントを見ることができます。 
+例えば、 http://golang.org/pkg/math/big/?m=all を開くと、bigパッケージで宣言されたすべて（エクスポートされていないものも）のドキュメントを見ることができます。 
 TODO: "godoc -src math/big .*" で意図したとおりにならないのはなんで？？
 For instance, http://golang.org/pkg/math/big/?m=all,text shows the documentation
 for all (not just the exported) declarations of package big, in textual form (as
@@ -120,8 +120,11 @@ it would appear when using godoc from the command line: "godoc -src math/big .*"
 
 通常、godocは、基盤となっているOSのファイルシステムからファイルを提供します。
 代わりに -zipフラグで .zip ファイルから提供することもできます。
-ファイルパスは .zipファイルで保持され、パスセパレータとしてスラッシュ ('/') を使う必要があり、
-それらはルートを ... ? TODO:動作確認 zipコマンドの使い方あってる？
+ファイルパスは.zipファイルで保持し、パスセパレータはスラッシュ ('/') を使う必要があり、
+それらはアンルート？？？(unroot)されている必要があります。
+$GOROOT (または -goroot)は、Goのルートディレクトリを含む.zipファイルへのディレクトリパスを与える必要があります。
+例えば、コマンドで.zipファイル生成するには:
+TODO:動作確認 zipコマンドの使い方あってる？
 By default, godoc serves files from the file system of the underlying OS.
 Instead, a .zip file may be provided via the -zip flag, which contains
 the file system to serve. The file paths stored in the .zip file must use
@@ -131,7 +134,7 @@ For instance, for a .zip file created by the command:
 
         zip go.zip $HOME/go
 
-one may run godoc as follows:
+すると、次のようにgodocを実行できます:
 
         godoc -http=:6060 -zip=go.zip -goroot=$HOME/go
 
