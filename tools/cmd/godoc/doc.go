@@ -50,23 +50,23 @@ The flags are:
         -tabwidth=4
                 タブ幅をスペースの数で指定します。
         -timestamps=true
-                show timestamps with directory listings
+                パッケージディレクトリを表示する際にタイムスタンプを表示します(-http時)。
         -index
-                enable identifier and full text search index
-                (no search box is shown if -index is not set)
+                全文検索を有効にします
         -index_files=""
-                glob pattern specifying index files; if not empty,
-                the index is read from these files in sorted order
+                インデックスファイル名のパターンを指定します。
+                設定した場合、インデックスは整列順でファイルを読み込みます。
         -index_throttle=0.75
-                index throttle value; a value of 0 means no time is allocated
-                to the indexer (the indexer will never finish), a value of 1.0
-                means that index creation is running at full throttle (other
-                goroutines may get no time while the index is built)
+                インデックススロットルの値を指定します。
+                値を0にすることは、インデクサーへの割り当て時間がない
+                （インデクサは完了しない）という意味になります。
+                値を1.0にすることは、インデックスの生成をフルスロットルで実行する
+                （他のgoroutineはインデックスのビルドが完了するまでの間は動かない）という意味になります。
         -links=true:
-                link identifiers to their declarations
+                宣言されている箇所へのリンクを生成します。
         -write_index=false
-                write index to a file; the file name must be specified with
-                -index_files
+                インデックスファイルを書き出します。
+                ファイル名は -index_files で一緒に指定する必要があります。
         -maxresults=10000
                 maximum number of full text search results shown
                 (no full text index is built if maxresults <= 0)
@@ -82,14 +82,14 @@ The flags are:
         -server=addr
                 コマンドラインサーチでのサーバアクセス先を指定します。
         -templates=""
-                directory containing alternate template files; if set,
-                the directory may provide alternative template files
-                for the files in $GOROOT/lib/godoc
+                代替のテンプレートファイルを含むディレクトリを指定します。
+                指定する場合、指定するディレクトリに static/ のファイルの代わりの
+                テンプレートファイルを用意します。
         -url=path
                 print to standard output the data that would be served by
                 an HTTP request for path
         -zip=""
-                zip file providing the file system to serve; disabled if empty
+                zipファイルでコンテンツを提供します。未指定で無効です。
 
 godocは、環境変数 $GOROOT と $GOPATH （設定してあれば）を見てパッケージを検索します。
 この動作は、 -gorootフラグで $GOROOT を変えることで変更することができます。
@@ -112,40 +112,36 @@ godocが提供するウェブページのプレゼンテーションモードは
         text    HTMLではなく、テキストフォーマット（コマンドライン用）で提供します
         flat    パッケージ表示を階層ではなく、フルパスを用いたフラット（インデントのない）なリストで提供します
 
-例えば、 http://golang.org/pkg/math/big/?m=all を開くと、bigパッケージで宣言されたすべて（エクスポートされていないものも）のドキュメントを見ることができます。 
-TODO: "godoc -src math/big .*" で意図したとおりにならないのはなんで？？
-For instance, http://golang.org/pkg/math/big/?m=all,text shows the documentation
-for all (not just the exported) declarations of package big, in textual form (as
-it would appear when using godoc from the command line: "godoc -src math/big .*").
+例えば、 http://golang.org/pkg/math/big/?m=all を開くと、 big パッケージで宣言されたすべて（エクスポートされていないものも）のドキュメントを見ることができます。
+コマンドラインでは、 "godoc -src math/big .*" として閲覧することができます。
 
 通常、godocは、基盤となっているOSのファイルシステムからファイルを提供します。
 代わりに -zipフラグで .zip ファイルから提供することもできます。
 ファイルパスは.zipファイルで保持し、パスセパレータはスラッシュ ('/') を使う必要があり、
 それらはアンルート？？？(unroot)されている必要があります。
 $GOROOT (または -goroot)は、Goのルートディレクトリを含む.zipファイルへのディレクトリパスを与える必要があります。
-例えば、コマンドで.zipファイル生成するには:
-TODO:動作確認 zipコマンドの使い方あってる？
-By default, godoc serves files from the file system of the underlying OS.
-Instead, a .zip file may be provided via the -zip flag, which contains
-the file system to serve. The file paths stored in the .zip file must use
-slash ('/') as path separator; and they must be unrooted. $GOROOT (or -goroot)
-must be set to the .zip file directory path containing the Go root directory.
-For instance, for a .zip file created by the command:
+コマンドで.zipファイル生成するには、例えば:
 
         zip go.zip $HOME/go
 
-すると、次のようにgodocを実行できます:
+のように（訳注1）してファイルを追加し、次のようにgodocを実行できます:
 
         godoc -http=:6060 -zip=go.zip -goroot=$HOME/go
 
 godocのドキュメンテーションは go/docパッケージでHTMLやテキストへ変換されます。
 フォーマットの詳細は http://golang.org/pkg/go/doc/#ToHTML を御覧ください。
 
-コメントの良い書き方については、 "Godoc: documenting Go code" 
+コメントの良い書き方については、 "Godoc: documenting Go code"
 http://golang.org/doc/articles/godoc_documenting_go_code.html を御覧ください。
 
 本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/cmd/godoc/doc.go?repo=tools&r=0e399fef76b7c34144d51e7b64c6da5b5591ea51
 
+訳注1:
+zipコマンドの完全な例は:
+
+        zip -r go.zip $HOME/go -i \*.go -i \*.html -i \*.css -i \*.js -i \*.txt -i \*.c -i \*.h -i \*.s -i \*.png -i \*.jpg -i \*.sh -i favicon.ico
+
+        
 */
 package main
 
