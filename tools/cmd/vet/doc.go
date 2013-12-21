@@ -30,7 +30,7 @@ Printf群:
 
 2. メソッドのチェック (-methods)
 
-以下を含む、よく知られた名前のメソッドのための標準ではない識別子をチェックします:
+以下のよく使われる名前のメソッドで、標準的ではないシグニチャ（関数、引数、戻り値）になっているものをチェックします:
         Format GobEncode GobDecode MarshalJSON MarshalXML
         Peek ReadByte ReadFrom ReadRune Scan Seek
         UnmarshalJSON UnreadByte UnreadRune WriteByte
