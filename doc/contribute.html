@@ -1,0 +1,752 @@
+<!--{
+	"Title": "Contribution Guidelines"
+}-->
+
+<h2 id="Introduction">Introduction</h2>
+
+<p>
+このドキュメントは、Goプロジェクトへ貢献するための方法を説明します。
+ここでは、<a href="/doc/install/source">installation instructions</a>
+でGoをソースからインストールし、
+<a href="code.html">書いた自分のソースコードをテストする術/a>
+を既に修得しているものと仮定します。
+（<code>gccgo</code>は別のガイド: 
+<a href="gccgo_contribute.html">Contributing to gccgo</a>
+を参照ください。）
+</p>
+
+<h2 id="Design">Discuss your design</h2>
+
+<p>
+Goプロジェクトではコミットを歓迎します、が、Goのメインリポジトリに取り込みたいのであれば、
+あなたが取り組んでいることをみんなに知らせてください。
+</p>
+
+<p>
+何か新しいことへ取り組む前に、
+<a href="http://groups.google.com/group/golang-nuts">メーリングリスト</a>
+へメールを送り、計画について議論してください。
+これは、デザインを検証する機会をみんなに与え、同じことをしてしまうことを避け、
+そして、言語やツールの目標に沿ったアイディアにしていく活動です。
+また、コードが書かれる前にデザインが有効であることを保証します。
+コードレビューツールは詳細な議論をする場ではありません。
+</p>
+
+<p>
+要するに、コードの前にメールを送ってください。
+そして、変更するためにチェンジリスト(change list)のメールで議論を始めないようにしてください。
+</p>
+
+<h2 id="Testing">Testing redux</h2>
+
+<p>
+あなたが<a href="code.html">書いたコードとテスト</a>は、
+レビューに送る前に、他のパッケージやプログラムを破壊しない変更であることを
+確かめるために、ツリー全体で全てのテストを実行します:
+</p>
+
+<pre>
+cd $GOROOT/src
+./all.bash    # On Windows, run all.bat
+</pre>
+
+<p>
+全体のテストを実施して、"<code>ALL TESTS PASSED</code>"が表示されればOKです。
+</p>
+
+<h2 id="Code_review">Code review</h2>
+
+<p>
+Goへの変更は、誰が変更したとしても、
+それがリポジトリへコミットされる前にレビューされる必要性があります。
+（例外として、ビルドの修正のような場合は
+レビューはコミット後に手短にフォローします）
+Mercurialの拡張は、コードレビューのプロセスを管理するのに役に立ちます。
+この拡張はGoのソースツリーに含んでいますので、
+以下の手順に従ってMercurialの設定に追加してください。
+</p>
+
+<h3>Caveat for Mercurial aficionados</h3>
+
+<p>
+注意:コードレビュー拡張で拡張したMercurialの使い方と、標準のMercurialの使い方は異なります。
+</p>
+
+<p>
+Goのリポジトリは、レビューした変更点の単一ラインとして管理されています。
+Mercurialでの変更グラフの複雑さを避けることを目的としています。
+コードレビュー拡張で便利なのは: <code>hg submit</code> コマンドで、
+リモートリポジトリと比較してローカルリポジトリが古くなっているか自動的にチェックし、警告します。
+また、<code>hg submit</code>コマンドはGoリポジトリの他の項目について検証します。
+例えば、Goのコードが<a href="/cmd/gofmt">gofmt</a>で定義されている
+標準スタイルでフォーマットされているか、
+また、コードの著作が<a href="#copyright">copyright purposes</a>
+に沿って適切に記載されているかをチェックします。
+</p>
+
+<p>
+<code>hg submit</code>で作成された変更のみを確実に支援するために、
+標準の<code>hg commit</code>コマンドは無効になります。
+</p>
+
+<h3>Configure the extension</h3>
+
+<p><code>$GOROOT/.hg/hgrc</code>へ以下を追加します:</p>
+
+<pre>
+[extensions]
+codereview = $GOROOT/lib/codereview/codereview.py
+
+[ui]
+username = Your Name &lt;you@server.dom&gt;
+</pre>
+
+<p>
+<code>username</code>の情報は、あなたがコミッター（下のセクションを参照）ではない限り利用されませんが、
+これがないとMercurialから文句を言われます。
+</p>
+
+<h3>Understanding the extension</h3>
+
+<p>
+コードレビューの拡張を追加した後、まずは:
+</p>
+
+<pre>
+$ hg help codereview
+</pre>
+
+<p>
+として、このコマンドを修得してください。
+特定のコードレビューコマンド（例えば<code>change</code>）について学ぶためには次のように実行します:
+</p>
+
+<pre>
+$ hg help change
+</pre>
+
+<p>
+コードレビュー拡張は、<code>$GOROOT</code>の自分のチェックアウトだけで有効です。
+よって、このドキュメントでのコマンドの実行は、<code>$GOROOT</code>内と想定しています。
+</p>
+
+<p>
+Windowsユーザは、コードレビューの拡張を動作するために
+追加の作業が必要です。
+<a href="http://code.google.com/p/go-wiki/wiki">Go Wiki</a>の
+<a href="https://code.google.com/p/go-wiki/wiki/CodeReview">CodeReview page</a>を参照してください。
+</p>
+
+<h3>Log in to the code review site.</h3>
+
+<p>
+コードレビューサーバは、認証のためGoogleアカウントが必要です。
+（もし<a href="https://www.google.com/accounts/Login?hl=en&amp;continue=http://www.google.com/">sign in at google.com</a>でログインできるなら、コードレビューサーバへサインインできます。）
+emailアドレスは、コードレビューサイト上で使え、
+<a href="http://code.google.com/p/go/source/list">Mercurial change log</a>
+と
+<a href="/CONTRIBUTORS"><code>CONTRIBUTORS</code></a>ファイルへ記録されます。
+なお、あなたが受信している任意のアドレスで
+<a href="https://www.google.com/accounts/NewAccount">Google Accountを作成</a>
+することもできます。
+二段階認証を有効にしている場合、アプリケーション固有のパスワードを生成し、
+プロンプトでパスワードを使うことを忘れないようにしてください。
+</p>
+
+<pre>
+$ cd $GOROOT
+$ hg code-login
+Email (login for uploading to codereview.appspot.com): rsc@golang.org
+Password for rsc@golang.org:
+
+Saving authentication cookies to /Users/rsc/.codereview_upload_cookies_codereview.appspot.com
+</pre>
+
+<h3>Configure your account settings.</h3>
+
+<p>
+自分の<a href="http://codereview.appspot.com/settings">code review settings</a>を編集し、
+ニックネームを取得してください。
+レビュー時に多くの内容を受け取るために、
+Contextオプションに&ldquo;Whole file&rdquo;をセットしておくのがオススメです。
+</p>
+
+<p>
+一度、設定ページでニックネームを選んでおくと、
+他の人は、レビュアーやCCリストへ、そのニックネームを使うことができるようになります。
+</p>
+
+<h3>Switch to the default branch</h3>
+
+<p>
+ほとんどのGoインストールは、releaseブランチを使っていますが、
+新しい変更はdefaultブランチだけにすべきです。
+（ただ、リリースプロセスの一部としてreleaseブランチへ後で適用することもあります）
+変更を入れる前に、必ずdefaultブランチを使ってください:
+</p>
+
+<pre>
+$ hg update default
+</pre>
+
+<h3>Make a change</h3>
+
+<p>
+チェックアウトしたツリー全体は、どこでも書き込み可能です。
+ファイルを編集する必要があれば、単にそれを編集するだけです。
+Mercurialは、その変更を把握しています。
+なお、ファイルを追加(add)、削除(remove)、コピー(copy)、リネーム(rename)は、
+Mercurialへ知らせるために、
+<code>hg add</code>、
+<code>hg rm</code>、
+<code>hg cp</code>、
+<code>hg mv</code>
+を使ってください。
+</p>
+
+<p>
+変更をレビューへ送る準備ができたら、自分のGoリポジトリの任意の場所から:
+</p>
+
+<pre>
+$ hg change
+</pre>
+
+<p>
+を実行します。
+するとMercurialは、あなたのエディタで変更の説明を書くためのファイルを開きます
+（これは、環境変数の<code>$EDITOR</code>に設定してあるエディタを使います。
+デフォルトでは<code>vi</code>です）。
+例えば、開かれたファイルはこのようなものです:
+</p>
+
+<pre>
+# Change list.
+# Lines beginning with # are ignored.
+# Multi-line values should be indented.
+
+Reviewer:
+CC:
+
+Description:
+	&lt;enter description here&gt;
+
+Files:
+	src/pkg/math/sin.go
+	src/pkg/math/tan.go
+	src/pkg/regexp/regexp.go
+</pre>
+
+<p>
+<code>Reviewer</code>は、この変更へアサインするレビュアーをリストし、
+<code>CC</code>は、変更について知らせたい人をリストします。
+これらは、コードレビューのニックネームや、任意のemailアドレスを使えます。
+チェンジリスト(change list)を送るに至るまでの議論で
+明示的に言われない限り、
+レビュアーは空欄のままにします。
+これは、レビュアーとして
+<a href="http://groups.google.com/group/golang-dev">golang-dev@googlegroups.com</a>
+のメーリングリストを使うことを意味します。
+</p>
+
+<p>
+&ldquo;<code>&lt;enter description here&gt;</code>&rdquo;
+を、あなたの変更の説明で置き換えてください。
+説明の最初の行は、影響するパッケージを先頭に、一行で変更の要約を書くようにします。
+コードレビューのメールのための議題としても使われます。
+次の行からは詳しい内容をすきなだけ書いてください。
+</p>
+
+<p>
+<code>Files</code>セクションは、
+あなたの変更のすべてのファイルをリストしています。
+関連のない変更は、他のチェンジリストにしましょう。
+例では、
+<code>regexp.go</code>の行を削除することで、
+<code>math</code>パッケージへの変更だけにしています。
+</p>
+
+<p>
+編集後、テンプレートはこのようになりました:
+</p>
+
+<pre>
+# Change list.
+# Lines beginning with # are ignored.
+# Multi-line values should be indented.
+
+Reviewer: golang-dev@googlegroups.com
+CC: math-nuts@swtch.com
+
+Description:
+	math: improved Sin, Cos and Tan precision for very large arguments.
+
+	See Bimmler and Shaney, ``Extreme sinusoids,'' J. Math 3(14).
+	Fixes issue 159.
+
+Files:
+	src/pkg/math/sin.go
+	src/pkg/math/tan.go
+</pre>
+
+<p>
+&ldquo;Fixes issue 159.&rdquo;
+というのは、
+<a href="http://code.google.com/p/go/issues/list">Go issue tracker</a>
+の
+issue 159
+に関連する変更であることを意味する特別な文です。
+この変更が最終的に投稿されたとき、
+issue trackerはissueをfixedとして自動的に記録します
+（この詳細な使い方については、
+<a href="http://code.google.com/p/support/wiki/IssueTracker#Integration_with_version_control">Google Project Hosting Issue Tracker documentation</a>
+に記載されています）。
+</p>
+
+<p>
+それでは、ファイルを保存して、エディタを終了します。
+</p>
+
+<p>
+<code>hg change</code>で、
+コードレビューサーバはあなたの変更へissue番号とURLを割り当て、
+次のように出力します:
+</p>
+
+<pre>
+CL created: http://codereview.appspot.com/99999
+</pre>
+
+<h3>Adding or removing files from an existing change</h3>
+
+<p>
+もし、チェンジリスト(CL)を再編集したり、CLへ更新ファイルを追加する必要がある時は、
+<code>hg change 99999</code>
+を実行します。
+</p>
+
+<p>
+他の方法は、
+</p>
+
+<pre>
+$ hg file 99999 somefile
+</pre>
+
+<p>
+で、CL 99999へ<code>somefile</code>を追加し、
+</p>
+
+<pre>
+$ hg file -d 99999 somefile
+</pre>
+
+<p>
+で、CLから<code>somefile</code>を削除します。
+</p>
+
+<p>
+ファイルは、ひとつのアクティブなCLだけへ属すことができます。
+<code>hg file</code>は、
+もしファイルが変更の間で移動される際に警告を出すでしょう。
+</p>
+
+<h3>Synchronize your client</h3>
+
+<p>
+あなたが作業している間に、他の人からリポジトリへ変更のコミットがあることでしょう。
+クライアントでアップデートするためには:
+</p>
+
+<pre>
+$ hg sync
+</pre>
+
+<p>
+を実行します。
+（Mercurialユーザのために補足すると、
+<code>hg sync</code>
+は
+<code>hg pull -u</code>
+を実行しますが、
+新しいデータに対し、ローカルのチェンジリストの状態も同期しています）
+</p>
+
+<p>
+あなたが編集していたファイルが変更されている場合、
+Mercurialはローカルの変更に対し、リモートの変更をマージ（merge）
+を試みます。
+いくつかのファイルは人の手でマージするために残るかもしれません。
+</p>
+
+<p>
+例えば、
+あなたの手元に編集した<code>flag_test.go</code>があるとします。
+しかし、他の誰かが別の変更をコミットしました。
+<code>hg sync</code>を実行すると、次のような（ヒドイ）結果を得る（強調を追加しています）でしょう:
+</p>
+
+<pre>
+$ hg sync
+adding changesets
+adding manifests
+adding file changes
+added 1 changeset with 2 changes to 2 files
+getting src/pkg/flag/flag.go
+couldn't find merge tool hgmerge
+merging src/pkg/flag/flag_test.go
+warning: conflicts during merge.
+<i>merging src/pkg/flag/flag_test.go failed!</i>
+1 file updated, 0 files merged, 0 files removed, 1 file unresolved
+use 'hg resolve' to retry unresolved file merges
+$
+</pre>
+
+<p>
+重要な部分はイタリックの行で、
+「Mercurialは別の変更であなたの変更をマージすることに失敗した」
+ということを伝えています。
+これが発生すると、
+Mercurialは、ファイルに両方の編集内容を
+<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>と
+<code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>のマークで記録します。
+マージするために、このファイルの編集が必要です。
+例で話を続けると、
+<code>flag_test.go</code>でこれら文字列を検索すると
+次のようになっているかもしれません:
+</p>
+
+<pre>
+	VisitAll(visitor);
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; local
+	if len(m) != 7 {
+=======
+	if len(m) != 8 {
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; other
+		t.Error("VisitAll misses some flags");
+</pre>
+
+<p>
+Mercurialは
+
+オリジナルのテキストは6で、あなたは1追加し、別の変更では2追加しています。
+ですので、正しい修正は9と考えることができます。
+では、マークを取り除き、正しいコードを書きます:
+</p>
+
+<pre>
+	VisitAll(visitor);
+	if len(m) != 9 {
+		t.Error("VisitAll misses some flags");
+</pre>
+
+<p>
+そして、Mercurialへコンフリクト(conflict)を解決(resolve)したことを伝えます:
+</p>
+
+<pre>
+$ hg resolve -m flag_test.go
+</pre>
+
+<p>
+デバッグのためにファイルを編集してしまっても
+編集内容を保管することを気にしなくても大丈夫です。
+編集内容を破棄するためには
+<code>hg revert flag_test.go</code>
+が利用できますが、
+<code>hg resolve -m</code>
+をコンフリクトを解決したことを記録するために実行する必要があります。
+</p>
+
+<h3>Mail the change for review</h3>
+
+<p>
+変更の作成、更新の操作は、コードレビューサーバへdiffのコピーをアップロードしますが、
+これについては誰にも通知しません。
+通知するためには、
+<code>hg mail</code>
+を実行する必要があります)。
+</p>
+
+<p>
+変更をレビューへ送るために、
+<code>hg change</code>
+の時に割り当てられたチェンジリストの番号を使って
+<code>hg mail</code>
+を実行します:
+</p>
+
+<pre>
+$ hg mail 99999
+</pre>
+
+<p>
+<code>Reviewer:</code>と
+<code>CC:</code>は、
+それぞれオプションの
+<code>-r</code>と
+<code>--cc</code>で追加することができます。
+上の例では、
+<code>Reviewer</code>と
+<code>CC</code>の行を空っぽにして次のように実行できます:
+</p>
+
+<pre>
+$ hg mail -r golang-dev@googlegroups.com --cc math-nuts@swtch.com 99999
+</pre>
+
+<p>
+これで同じ意味になります。
+</p>
+
+<p>
+<code>-r</code>と
+<code>--cc</code>は、
+<code>--r</code>や
+<code>-cc</code>のスペルでは使用できないことに注意してください。
+</p>
+
+<p>
+あなたの変更が未解決(open)のissueに関連している場合は、
+issueへあなたの提案した修正を
+CLへのリンクを含め、
+issueのアナウンスへ
+コメントを追加してください。
+</p>
+
+<h3>Reviewing code</h3>
+
+<p>
+<code>hg mail</code>は、
+issueへのURLと変更へコメントをレビュアーに求めるための内容を
+あなたとレビュアーへemailで送ります（訳注1）。
+レビューを完了したら、レビュアーはページにある
+&ldquo;Publish and Mail comments&rdquo;
+をクリックしてコメントを返します。
+</p>
+
+
+<h3>Revise and upload</h3>
+
+<p>
+おそらく、レビュアーのコメントに応じてコードを見直すと思います。
+見直しが終われば、
+<code>hg change</code>
+で割り当てられたチェンジリストの番号を使って
+<code>hg upload</code>
+で通知せずに
+コードレビューサーバへ変更をアップロードします。
+</p>
+
+<pre>
+$ hg upload 99999
+</pre>
+
+<p>
+コードの見直しが完了し、レビューの準備が整ったなら:
+</p>
+
+<pre>
+$ hg mail 99999
+</pre>
+
+<p>
+で再び最新のコードをアップロードし、レビュアーへ
+please take another look (<code>PTAL</code>)
+依頼をメールします。
+コードレビューのウェブページへ訪れ、
+あなたがそれに対処してきたことをレビュアーへ知らせたり、また、なぜそうしなかったのかについて
+コメントを返信するほうがいいかもしれません。
+返信が終われば、
+&ldquo;Publish and Mail comments&rdquo;
+をクリックして、行へ返信したり他のコメントを返したりします。
+</p>
+<p>
+レビュアーは、新しいコピーへコメントでき、このプロセスを繰り返すことができます。
+そして、レビュアーは、<code>LGTM</code>(looks good to me)と言ってメールを返すことで
+変更内容を受け入れます。
+</p>
+
+<p>
+<code>hg pending</code> (<code>hg p</code>)
+を実行して、あなたの保留中(pending)のリストを表示できます。
+</p>
+
+<h3>Reviewing code by others</h3>
+
+<p>
+<code>hg clpatch</code>コマンド
+で、誰かのチェンジリストを自分のMercurialクライアントへインポートすることができます。
+例えば:
+</p>
+
+<pre>
+$ hg clpatch 99999
+</pre>
+
+<p>
+で、
+CL 99999
+の最新の差分が手元へ適用されます。
+CL 99999
+で参照しているファイルのいずれかへ、既に手元のファイルへ変更がある場合、
+<code>clpatch</code>は全体への適用を中止します。
+一度適用すると、
+<code>hg pending</code>
+などの出力へ
+CL 99999
+が表示されるようになります。
+</p>
+
+<p>
+手元に適用したCLを元に戻す(revert)なら、
+<code>hg revert</code>
+コマンドを使います。
+</p>
+
+<pre>
+$ hg revert @99999
+</pre>
+
+<p>
+として、
+CL 99999
+のオリジナルの状態へファイルを戻せます。
+これは、CLのリビジョンを戻したり、他のを適用してみたりする際に効果を発揮します。
+</p>
+
+<p>
+CLをコミットし終わった後、
+<code>hg sync</code>
+を実行すると、ローカルの保留中(pending)のリストからそれが削除されます。
+ときどき、提案を取りやめていたり、放棄されているCLの同期をやめたいことがあります。
+そんなときは、
+<code>hg change -D 99999</code>
+で
+CL 99999
+への参照を除去できます。
+</p>
+
+<h3>Submit the change after the review</h3>
+
+<p>
+<code>LGTM</code>
+としてもらえたら、いよいよMercurialリポジトリへ入れる時です。
+</p>
+
+<p>
+もしあなたがコミッター(committer)でなければ、
+変更を直接コミットできません。
+代わりに、コミッターがレビュアーから
+<code>LGTM</code>
+としてもらったものに対して:
+</p>
+
+<pre>
+$ hg clpatch 99999
+$ hg submit 99999
+</pre>
+
+<p>
+とします。
+<code>submit</code>は、コードをリポジトリへ入れるコマンドです。
+コミットのAutherはあなたの名前で、誰がコミッターだったかを示すメッセージがログに記録されます。
+次に
+<code>hg sync</code>
+を実行したときに、変更がコミットされたことを知らせてくれます。
+</p>
+
+<p>
+もし、あなたがコミッターなら:
+</p>
+
+<pre>
+$ hg submit 99999
+</pre>
+
+<p>
+を実行します。
+これで、変更内容にコードレビューのリンクが記載され、
+コードレビュー上は、リポジトリへコミットされた内容のリンクで更新されます。
+</p>
+
+<p>
+ローカルが古くなっている場合、
+<code>hg submit</code>はsyncするように促してきます:
+</p>
+
+<pre>
+$ hg submit 99999
+local repository out of date; must sync before submit
+</pre>
+
+<h2 id="copyright">Copyright</h2>
+
+<p>
+Goのリポジトリ内のファイルには作者(author)の名前を記載しません。
+これは、最新のリストを維持することで混乱してしまうことを避けるためです。
+代わりに、あなたの名前は
+<a href="http://code.google.com/p/go/source/list">Mercurialのチェンジログ</a>
+に記載され、さらに
+<a href="/CONTRIBUTORS"><code>CONTRIBUTORS</code></a>
+ファイルと
+<a href="/AUTHORS"><code>AUTHORS</code></a>
+に記載されるようになります。
+</p>
+
+<p>
+<a href="/CONTRIBUTORS"><code>CONTRIBUTORS</code></a>
+ファイルは、Goへ貢献した<b>人たち</b>が誰かを定義し、
+<a href="/AUTHORS"><code>AUTHORS</code></a>
+ファイルは、Goの<b>著作の保有者たち</b>が誰かを定義しています。
+GoogleのGoのデベロッパーにより、これらのファイルは、あなたの初めてのコミットで更新されます。
+これをできるようにするために、以下のcontributor license agreementsのいずれかをしておく必要があります。
+<ul>
+<li>
+あなた個人が著作権者である場合、
+<a href="http://code.google.com/legal/individual-cla-v1.0.html">individual contributor license agreement</a>
+に同意する必要があります。これはオンラインで実施することができます。
+</li>
+<li>
+あなたの組織が著作権者である場合、
+<a href="http://code.google.com/legal/corporate-cla-v1.0.html">corporate contributor license agreement</a>
+に同意する必要があります。
+</li>
+</ul>
+（既に、別のGoogleのオープンソースプロジェクトで実施している場合は、再度同意する必要はありません。）
+</p>
+
+<p>
+この面倒な手続きは、初めてのコミットにだけ必要です。
+</p>
+
+<p>
+標準の著作表示のヘッダは、以下を使うようにしてください:
+</p>
+
+<pre>
+// Copyright 2013 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+</pre>
+
+<p>
+ファイルをリポジトリへ追加した年を入れます。
+ファイルを更新する度に年を更新する必要はありません。
+</p>
+
+
+<p>
+翻訳メモ:
+
+submit=コミットと翻訳しています
+</p>
+
+<p>
+訳注1: emailはコードレビューサーバから送信されます。
+</p>
+
+
+<p>
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/contribute.html?r=3293eec97f4c858334f7ddb0e0464b1dcf0bc51c
+</p>
