@@ -17,7 +17,7 @@ func (f japanese) isValidHead(r rune) bool {
 		return true
 	}
 	return false
-	
+
 }
 
 func (f japanese) isValidEnd(r rune) bool {
@@ -29,7 +29,7 @@ func (f japanese) isValidEnd(r rune) bool {
 		return true
 	}
 	return false
-	
+
 }
 
 func (f japanese) hasInvalidCharacters(line string) bool {

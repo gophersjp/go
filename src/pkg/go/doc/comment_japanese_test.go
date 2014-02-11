@@ -1,8 +1,8 @@
 package doc
 
 import (
-    "bytes"
-    "testing"
+	"bytes"
+	"testing"
 )
 
 func TestToHTML(t *testing.T) {
@@ -34,7 +34,7 @@ This is also not a header！
 
 Not, a header
 
-not header`	
+not header`
 
 	expected := `<p>
 これは導入部です。
@@ -72,11 +72,10 @@ Not, a header
 <p>
 not header</p>
 `
-	
-	var actual bytes.Buffer
-    ToHTML(&actual, input, nil)
-    if actual.String() != expected {
-		t.Errorf("expected: %v\nbut: %v", expected, actual.String())
-    }
-}
 
+	var actual bytes.Buffer
+	ToHTML(&actual, input, nil)
+	if actual.String() != expected {
+		t.Errorf("expected: %v\nbut: %v", expected, actual.String())
+	}
+}

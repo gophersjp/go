@@ -189,7 +189,7 @@ func heading(line string) string {
 
 	// it must end in a letter or digit:
 	r, _ = utf8.DecodeLastRuneInString(line)
-	if !unicode.IsLetter(r) && !unicode.IsDigit(r) && !isValidNonLatinEndCharacter(r){
+	if !unicode.IsLetter(r) && !unicode.IsDigit(r) && !isValidNonLatinEndCharacter(r) {
 		return ""
 	}
 
