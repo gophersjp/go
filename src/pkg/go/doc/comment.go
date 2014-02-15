@@ -7,6 +7,7 @@
 package doc
 
 import (
+	"encoding/json"
 	"io"
 	"regexp"
 	"strings"
@@ -181,21 +182,30 @@ func heading(line string) string {
 		return ""
 	}
 
-	// a heading must start with an uppercase letter
-	r, _ := utf8.DecodeRuneInString(line)
-	if (!unicode.IsLetter(r) || !unicode.IsUpper(r)) && !isValidNonLatinHeadCharacter(r) {
-		return ""
+	// check for non-alphabetical languages if a specific language is set
+	isValid := false
+	if commentLang != "" {
+		isValid = isValidNonAlphabeticalScriptHeader(line)
 	}
 
-	// it must end in a letter or digit:
-	r, _ = utf8.DecodeLastRuneInString(line)
-	if !unicode.IsLetter(r) && !unicode.IsDigit(r) && !isValidNonLatinEndCharacter(r) {
-		return ""
-	}
+	// if the check of non-alphabetical languages is skipped or the result of the check is false, then check for alphabetical characters
+	if !isValid {
+		// a heading must start with an uppercase letter
+		r, _ := utf8.DecodeRuneInString(line)
+		if !unicode.IsLetter(r) || !unicode.IsUpper(r) {
+			return ""
+		}
 
-	// exclude lines with illegal characters
-	if strings.IndexAny(line, ",.;:!?+*/=()[]{}_^°&§~%#@<\">\\") >= 0 || hasInvalidNonLatinCharacters(line) {
-		return ""
+		// it must end in a letter or digit:
+		r, _ = utf8.DecodeLastRuneInString(line)
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
+			return ""
+		}
+
+		// exclude lines with illegal characters
+		if strings.IndexAny(line, ",.;:!?+*/=()[]{}_^°&§~%#@<\">\\") >= 0 {
+			return ""
+		}
 	}
 
 	// allow "'" for possessive "'s" only
@@ -225,6 +235,8 @@ type block struct {
 	op    op
 	lines []string
 }
+
+var commentLang string
 
 var nonAlphaNumRx = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
@@ -287,6 +299,7 @@ func ToHTML(w io.Writer, text string, words map[string]string) {
 			w.Write(html_endpre)
 		}
 	}
+	commentLang = ""
 }
 
 func blocks(text string) []block {
@@ -309,6 +322,20 @@ func blocks(text string) []block {
 	unindent(lines)
 	for i := 0; i < len(lines); {
 		line := lines[i]
+		if i == 0 {
+			var langMap map[string]string
+			err := json.Unmarshal([]byte(line), &langMap)
+			if err != nil {
+				// go ahead
+			} else {
+				if langMap["language"] != "" {
+					// set language and go to the next line
+					commentLang = langMap["language"]
+					i++
+					continue
+				}
+			}
+		}
 		if isBlank(line) {
 			// close paragraph
 			close()
