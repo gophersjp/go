@@ -1,0 +1,228 @@
+<!--{
+	"Title": "さあ、はじめよう",
+	"Path":  "/doc/install"
+}-->
+
+<!--
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/install.html?r=1a3006bc130fc105665d49ecb95c72fc7820fa28
+-->
+
+<h2 id="download">Goディストリビューションのダウンロード</h2>
+
+<p>
+<a href="http://code.google.com/p/go/downloads" id="start" class="download" target="_blank">
+<span class="big">Goのダウンロード</span>
+<span class="desc">クリックしてダウンロードページに移動します</span>
+</a>
+</p>
+
+<p>
+<a href="http://code.google.com/p/go/downloads" target="_blank">公式バイナリディストリビューション</a>は32ビット（<code>386</code>）、64ビット（<code>amd64</code>）x86プロセッサアーキテクチャのLinux、Mac OS X（Snow Leopard以降）、Windowsオペレーティングシステムに対応しています。
+</p>
+
+<p>
+バイナリディストリビューションがお使いのオペレーティングシステム、アーキテクチャの組み合わせに対応していない場合は、<a href="/doc/install/source">ソースからのインストール</a>や<a href="/doc/install/gccgo">gcの代わりにgccgoをインストール</a>をお試しください。
+</p>
+
+
+<h2 id="requirements">システム要件</h2>
+
+<p>
+<code>gc</code>コンパイラは下記のオペレーティングシステム、アーキテクチャをサポートします。始める前に、これらの要件がお使いのシステムに合致していることをお確かめください。お使いのOSやアーキテクチャがリストにない場合は、<code>gccgo</code>を利用できることがあります。詳細は<a href="/doc/install/gccgo">セットアップとgccgoの利用</a>をご覧ください。
+</p>
+
+<table class="codetable" frame="border" summary="requirements">
+<tr>
+<th align="middle">オペレーティングシステム</th>
+<th align="middle">アーキテクチャ</th>
+<th align="middle">備考</th>
+</tr>
+<tr><td colspan="3"><hr></td></tr>
+<tr><td>FreeBSD 7以降</td> <td>amd64, 386, arm</td> <td>Debian GNU/kFreeBSDはサポートなし　FreeBSD/ARMはFreeBSD 10以降</td></tr>
+<tr><td>Linux 2.6.23以降（glibcが必要)</td> <td>amd64, 386, arm</td> <td>CentOS/RHEL 5.xはサポートなし　ARMのバイナリディストリビューションは現在なし</td></tr>
+<tr><td>Mac OS X 10.6以降</td> <td>amd64, 386</td> <td>Xcode<sup>&#8225;</sup>同梱のgcc<sup>&#8224;</sup>を利用</td></tr>
+<tr><td>Windows 2000以降</td> <td>amd64, 386</td> <td>mingw gcc<sup>&#8224;</sup>を利用　cygwin、msysは必要なし</td></tr>
+</table>
+
+<p>
+<sup>&#8224;</sup><code>gcc</code>は<a href="/cmd/cgo">cgo</a>を利用したい場合のみ必要です。<br/>
+<sup>&#8225;</sup>必要となるのは<a href="http://developer.apple.com/Xcode/">Xcode</a>のコマンドラインツールのインストールのみです。すでにXcode 4.3以降をインストール済みの場合は、ダウンロード環境設定パネルのコンポーネントタブからインストールできます。
+</p>
+
+
+<h2 id="install">Goツールのインストール</h2>
+
+<p>
+古いバージョンのGoからアップグレードする場合は、まず<a href="#uninstall">既存バージョンを削除</a>する必要があります。
+</p>
+
+<h3 id="tarball">Linux、Mac OS X、FreeBSD tarball</h3>
+
+<p>
+<a href="http://code.google.com/p/go/downloads/list?q=OpSys-FreeBSD+OR+OpSys-Linux+OR+OpSys-OSX+Type-Archive">アーカイブをダウンロード</a>し、<code>/usr/local</code>に解凍してGoツリーを<code>/usr/local/go</code>に作成してください。例えば、以下のとおりです。
+</p>
+
+<pre>
+tar -C /usr/local -xzf go$VERSION.$OS-$ARCH.tar.gz
+</pre>
+
+<p>
+インストールに適切なアーカイブファイルを選択してください。例えば、64ビットx86のLinuxにGoバージョン1.2をインストールする場合は、<code>go1.2.linux-amd64.tar.gz</code>というアーカイブをダウンロードしてください。
+</p>
+
+<p>
+（一般的に、これらのコマンドはrootととして、または<code>sudo</code>を通じて実行する必要があります。）
+</p>
+
+<p>
+<code>/usr/local/go/bin</code>を<code>PATH</code>環境変数に追加してください。<code>/etc/profile</code>（システム全体へ反映）または<code>$HOME/.profile</code>に以下の行を追加することで設定が完了します。
+</p>
+
+<pre>
+export PATH=$PATH:/usr/local/go/bin
+</pre>
+
+<h4 id="tarball_non_standard">カスタムの場所へのインストール</h4>
+
+<p>
+Goバイナリディストリビューションは<code>/usr/local/go</code>（Windowsの場合は<code>c:\Go</code>）にインストールすることを想定していますが、Goツールを他の場所にインストールすることも可能です。その場合は、インストールするディレクトリを示す<code>GOROOT</code>環境変数を設定する必要があります。
+</p>
+
+<p>
+例えば、Goをホームディレクトリにインストールする場合は、以下のコマンドを<code>$HOME/.profile</code>に追加します。
+</p>
+
+<pre>
+export GOROOT=$HOME/go
+export PATH=$PATH:$GOROOT/bin
+</pre>
+
+<p>
+<b>備考</b>：<code>GOROOT</code>はカスタムの場所にインストールする場合のみ設定します。
+</p>
+
+<h3 id="osx">Mac OS Xパッケージインストーラ</h3>
+
+<p>
+<a href="http://code.google.com/p/go/downloads/list?q=OpSys-OSX+Type-Installer">パッケージファイルをダウンロード</a>し、ファイルを開いてプロンプトにしたがってGoツールをインストールします。パッケージは<code>/usr/local/go</code>にGoディストリビューションをインストールします。
+</p>
+
+<p>
+パッケージはPATH環境変数に<code>/usr/local/go/bin</code>を自動的に追加します。開いているターミナルのセッションがある場合には、再起動して変更を有効にします。
+</p>
+
+<h3 id="windows">Windows</h3>
+
+<p>
+GoプロジェクトはWindowsユーザのために（<a href="/doc/install/source">ソースからのインストール</a>の他に）2種類のインストール方法を提供しています。環境変数を手動で設定する必要があるzipアーカイブと、自動でインストールの環境設定を行うMSIインストーラです。
+</p>
+
+<h4 id="windows_msi">MSIインストーラ</h4>
+
+<p>
+<a href="http://code.google.com/p/go/downloads/list?q=OpSys-Windows+Type%3DInstaller">MSIファイル</a>を開き、プロンプトにしたがってGoツールをインストールしてください。デフォルトでは、<code>c:\Go</code>にGoディストリビューションをインストールします。
+</p>
+
+<p>
+インストーラはPATH環境変数に<code>c:\Go\bin</code>を自動的に追加します。開いているコマンドプロンプトがある場合には、再起動して変更を有効にします。
+</p>
+
+<h4 id="windows_zip">zipアーカイブ</h4>
+
+<p>
+<a href="http://code.google.com/p/go/downloads/list?q=OpSys-Windows+Type%3DArchive">zipファイルをダウンロード</a>し、任意のディレクトリに解凍します。（<code>c:\Go</code>をお薦めします。）
+</p>
+
+<p>
+<code>c:\Go</code>以外のディレクトリに解凍する場合は、そのパスに<code>GOROOT</code>環境変数を設定する必要があります。
+</p>
+
+<p>
+Goのルート（例えば<code>c:\Go\bin</code>）のbinサブディレクトリを<code>PATH</code>環境変数に追加してください。
+</p>
+
+<h4 id="windows_env">Windowsの環境変数の設定</h4>
+
+<p>
+Windowsの場合、「システム」コントロールパネルの「詳細」タブの「環境変数」ボタンから環境変数の設定をすることができます。Windosのバージョンによっては、このコントロールパネルは「システム」コントロールパネルの「システムの詳細設定」となっている場合があります。
+</p>
+
+
+<h2 id="testing">インストールのテスト</h2>
+
+<p>
+以下のように、簡単なプログラムを構築することで、Goが正しくインストールされていることをチェックします。
+</p>
+
+<p>
+<code>hello.go</code>という名前のファイルを作成し、下記のプログラムを書き込みます。
+</p>
+
+<pre>
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Printf("hello, world\n")
+}
+</pre>
+
+<p>
+次に、<code>go</code>ツールで実行します。
+</p>
+
+<pre>
+$ go run hello.go
+hello, world
+</pre>
+
+<p>
+「hello, world」メッセージが表示されれば、正しくGoがインストールされていることになります。
+</p>
+
+
+<h2 id="gopath">作業環境のセットアップ</h2>
+
+<p>
+これでほとんど完了ですが、あともう少しだけセットアップが必要です。
+</p>
+
+<p>
+<a href="/doc/code.html" class="download" id="start">
+<span class="big">Goコードの書き方</span>
+<span class="desc">Goツールのセットアップ・利用方法を学びます</span>
+</a>
+</p>
+
+<p>
+<a href="/doc/code.html">Goコードの書き方</a>ドキュメントにGoツールを利用する際の<b>基本的なセットアップの説明</b>を記載しています。
+</p>
+
+
+<h2 id="uninstall">Goのアンインストール</h2>
+
+<p>
+システムから既存のGoインストールを削除する場合には、<code>go</code>ディレクトリを削除してください。通常は、Linux、Mac OS X、FreeBSDの場合は<code>/usr/local/go</code>、Windowsの場合は<code>c:\Go</code>です。
+</p>
+
+<p>
+また、<code>PATH</code>環境変数からGoの<code>bin</code>ディレクトリを削除する必要があります。Linux、FreeBSDの場合は<code>/etc/profile</code>または<code>$HOME/.profile</code>を編集してください。<a href="#osx">Mac OS Xパッケージ</a>でGoをインストールした場合は<code>/etc/paths.d/go</code>のファイルを削除してください。Windowsユーザの方は<a href="#windows_env">Windowsの環境変数の設定</a>のセクションをお読みください。
+</p>
+
+
+<h2 id="help">ヘルプを得る</h2>
+
+<p>
+リアルタイムヘルプについては、<a href="http://freenode.net/">Freenode</a> IRCサーバの<code>#go-nuts</code>で協力的なGopher達に質問してください。
+</p>
+
+<p>
+Go言語のディスカッションのためのオフィシャルメーリングリストは<a href="http://groups.google.com/group/golang-nuts">Go Nuts</a>です。
+</p>
+
+<p>
+バグのレポートには<a href="http://code.google.com/p/go/issues/list">Go issue tracker</a>を利用してください。
+</p>
+
+
