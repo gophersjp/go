@@ -203,18 +203,18 @@ func heading(line string) string {
 		if strings.IndexAny(line, ",.;:!?+*/=()[]{}_^°&§~%#@<\">\\") >= 0 {
 			return ""
 		}
-	}
 
-	// allow "'" for possessive "'s" only
-	for b := line; ; {
-		i := strings.IndexRune(b, '\'')
-		if i < 0 {
-			break
+		// allow "'" for possessive "'s" only
+		for b := line; ; {
+			i := strings.IndexRune(b, '\'')
+			if i < 0 {
+				break
+			}
+			if i+1 >= len(b) || b[i+1] != 's' || (i+2 < len(b) && b[i+2] != ' ') {
+				return "" // not followed by "s "
+			}
+			b = b[i+2:]
 		}
-		if i+1 >= len(b) || b[i+1] != 's' || (i+2 < len(b) && b[i+2] != ' ') {
-			return "" // not followed by "s "
-		}
-		b = b[i+2:]
 	}
 
 	return line
