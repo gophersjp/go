@@ -181,21 +181,28 @@ func heading(line string) string {
 		return ""
 	}
 
-	// a heading must start with an uppercase letter
-	r, _ := utf8.DecodeRuneInString(line)
-	if (!unicode.IsLetter(r) || !unicode.IsUpper(r)) && !isValidNonLatinHeadCharacter(r) {
-		return ""
-	}
+	// check for non-alphabetical languages
+	isValid := false
+	isValid = isValidNonAlphabeticalScriptHeader(line)
 
-	// it must end in a letter or digit:
-	r, _ = utf8.DecodeLastRuneInString(line)
-	if !unicode.IsLetter(r) && !unicode.IsDigit(r) && !isValidNonLatinEndCharacter(r) {
-		return ""
-	}
+	// if the result of non-alphabetical language check is false, then check for alphabetical characters
+	if !isValid {
+		// a heading must start with an uppercase letter
+		r, _ := utf8.DecodeRuneInString(line)
+		if !unicode.IsLetter(r) || !unicode.IsUpper(r) {
+			return ""
+		}
 
-	// exclude lines with illegal characters
-	if strings.IndexAny(line, ",.;:!?+*/=()[]{}_^°&§~%#@<\">\\") >= 0 || hasInvalidNonLatinCharacters(line) {
-		return ""
+		// it must end in a letter or digit:
+		r, _ = utf8.DecodeLastRuneInString(line)
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
+			return ""
+		}
+
+		// exclude lines with illegal characters
+		if strings.IndexAny(line, ",.;:!?+*/=()[]{}_^°&§~%#@<\">\\") >= 0 {
+			return ""
+		}
 	}
 
 	// allow "'" for possessive "'s" only

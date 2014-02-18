@@ -6,7 +6,8 @@ import (
 )
 
 func TestToHTML(t *testing.T) {
-	input := `これは導入部です。
+	input := `
+これは導入部です。
 
 これはヘッダです
 
@@ -76,6 +77,6 @@ not header</p>
 	var actual bytes.Buffer
 	ToHTML(&actual, input, nil)
 	if actual.String() != expected {
-		t.Errorf("expected: %v\nbut: %v", expected, actual.String())
+		t.Errorf("expected: %v\nbut was: %v", expected, actual.String())
 	}
 }
