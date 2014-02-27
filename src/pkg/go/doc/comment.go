@@ -183,7 +183,7 @@ func heading(line string) string {
 
 	// a heading must start with an uppercase letter
 	r, _ := utf8.DecodeRuneInString(line)
-	if !unicode.IsLetter(r) || !unicode.IsUpper(r) {
+	if !unicode.IsLetter(r) || unicode.IsLower(r) {
 		return ""
 	}
 

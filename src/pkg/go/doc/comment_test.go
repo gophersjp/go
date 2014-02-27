@@ -31,6 +31,13 @@ var headingTests = []struct {
 	{"Use n+m", false},
 	{"Scanning:", false},
 	{"N:M", false},
+	{"これはヘッダです", true},
+	{"これはヘッダではありません。", false},
+	{"コレも、ヘッダではないです", false},
+	{"ヘッダです", true},
+	{"此れもヘッダでないです。", false},
+	{"此れはヘッダで須", true},
+	{"これはヘッダでない！", false},
 }
 
 func TestIsHeading(t *testing.T) {
