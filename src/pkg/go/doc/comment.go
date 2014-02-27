@@ -194,8 +194,15 @@ func heading(line string) string {
 	}
 
 	// exclude lines with illegal characters
-	if strings.IndexAny(line, ",.;:!?+*/=()[]{}_^°&§~%#@<\">\\") >= 0 {
-		return ""
+	str := line
+	for len(str) > 0 {
+		r, size := utf8.DecodeRuneInString(str)
+		if unicode.IsPunct(r) || unicode.IsSymbol(r) {
+			if !strings.ContainsRune("'", r) {
+				return ""
+			}
+		}
+		str = str[size:]
 	}
 
 	// allow "'" for possessive "'s" only
