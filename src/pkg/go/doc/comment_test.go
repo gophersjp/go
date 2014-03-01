@@ -31,13 +31,15 @@ var headingTests = []struct {
 	{"Use n+m", false},
 	{"Scanning:", false},
 	{"N:M", false},
+	{"Fermat's Easy-to-read Sentence", true},
 	{"これはヘッダです", true},
 	{"これはヘッダではありません。", false},
 	{"コレも、ヘッダではないです", false},
 	{"ヘッダです", true},
 	{"此れもヘッダでないです。", false},
-	{"此れはヘッダで須", true},
+	{"此れはヘッダで候", true},
 	{"これはヘッダでない！", false},
+	{"※ただしヘッダでない", false},
 }
 
 func TestIsHeading(t *testing.T) {

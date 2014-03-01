@@ -198,7 +198,8 @@ func heading(line string) string {
 	for len(str) > 0 {
 		r, size := utf8.DecodeRuneInString(str)
 		if unicode.IsPunct(r) || unicode.IsSymbol(r) {
-			if !strings.ContainsRune("'", r) {
+			// consider exceptions that are valid
+			if !strings.ContainsRune("-'", r) {
 				return ""
 			}
 		}
