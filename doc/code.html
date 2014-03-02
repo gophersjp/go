@@ -1,0 +1,521 @@
+<!--{
+	"Title": "Goコードの書き方"
+}-->
+
+<!--
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/code.html?r=8b369932160386e3767059e791ecb842f33f68bf 
+-->
+
+<h2 id="Introduction">イントロダクション</h2>
+
+<p>
+このドキュメントでは簡単なGoパッケージの開発の説明、<a href="/cmd/go/">goツール</a>、Goパッケージとコマンドの標準的なフェッチ・ビルド・インストールの方法を紹介しています。
+</p>
+
+<p>
+<code>go</code>ツールの利用に際しては、コードを特定の方法で構成する必要があります。このドキュメントを注意深く読みましょう。最も簡単にGoをインストールし、使い始める方法を説明しています。
+</p>
+
+<p>
+同様の説明を<a href="http://www.youtube.com/watch?v=XCsL89YtqCs">スクリーンキャスト</a>で見ることができます。
+</p>
+
+
+<h2 id="Organization">コードの構成</h2>
+
+<h3 id="Workspaces">ワークスペース</h3>
+
+<p>
+<code>go</code>ツールは、公開レポジトリでメンテナンスされているオープンソースコードを扱うことを想定して設計されています。実際にコードを公開する必要はありませんが、公開する場合もしない場合も同じ方法で環境の設定を行うことができます。
+</p>
+
+<p>
+Goコードは<i>ワークスペース</i>内に置いておく必要があります。ワークスペースはルートに以下の3つのディレクトリを持つディレクトリ階層です。
+</p>
+
+<ul>
+<li><code>src</code>はパッケージに構成された（1ディレクトリに1パッケージ）Goのソースファイルを含み、
+<li><code>pkg</code>はパッケージオブジェクトを含み、
+<li><code>bin</code>は実行形式コマンドを含みます。
+</ul>
+
+<p>
+<code>go</code>ツールはソースパッケージをビルドし、その結果生成されるバイナリを<code>pkg</code>および<code>bin</code>にインストールします。
+</p>
+
+<p>
+<code>src</code>サブディレクトリは一般的に1つ以上のソースパッケージの開発を追跡するバージョンコントロールレポジトリ（Git、Mercurialなど）を複数内包します。
+</p>
+
+<p>
+実際にワークスペースがどのようになっているか把握していただくために、次の例をご覧ください。
+</p>
+
+<pre>
+bin/
+    streak                         # コマンド実行形式ファイル
+    todo                           # コマンド実行形式ファイル
+pkg/
+    linux_amd64/
+        code.google.com/p/goauth2/
+            oauth.a                # パッケージオブジェクト
+        github.com/nf/todo/
+            task.a                 # パッケージオブジェクト
+src/
+    code.google.com/p/goauth2/
+        .hg/                       # mercurialレポジトリメタデータ
+        oauth/
+            oauth.go               # パッケージソース
+            oauth_test.go          # テストソース
+    github.com/nf/
+        streak/
+            .git/                  # gitレポジトリメタデータ
+            oauth.go               # コマンドソース
+            streak.go              # コマンドソース
+        todo/
+            .git/                  # gitレポジトリメタデータ
+            task/
+                task.go            # パッケージソース
+            todo.go                # コマンドソース
+</pre>
+
+<p>
+このワークスペースには2つのコマンド（<code>streak</code> and <code>todo</code>）と2つのライブラリ（<code>oauth</code> and <code>task</code>）から成る3つのレポジトリ（<code>goauth2</code>、<code>streak</code>、<code>todo</code>）が入っています。
+</p>
+
+<p>
+コマンド、ライブラリは異なる種類のソースパッケージからビルドされます。この区別は<a href="#PackageNames">以降で</a>議論します。
+</p>
+
+
+<h3 id="GOPATH"><code>GOPATH</code>環境変数</h3>
+
+<p>
+<code>GOPATH</code>環境変数はワークスペースの場所を示してします。これがGoコードを開発する際に設定が必要な唯一の環境変数のはずです。
+</p>
+
+<p>
+始めるにあたっては、ワークスペースディレクトリを作成し、適宜<code>GOPATH</code>をセットしてください。ワークスペースはどこでも好きな場所に置いてよいですが、このドキュメントでは<code>$HOME/go</code>として説明しています。Goをインストールしたパスを指定<b>してはいけない</b>ことを注意してください。
+</p>
+
+<pre>
+$ <b>mkdir $HOME/go</b>
+$ <b>export GOPATH=$HOME/go</b>
+</pre>
+
+<p>
+利便性向上のため、以下のようにワークスペースの<code>bin</code>サブディレクトリを<code>PATH</code>に追加してください。
+</p>
+
+<pre>
+$ <b>export PATH=$PATH:$GOPATH/bin</b>
+</pre>
+
+
+<h3 id="PackagePaths">パッケージパス</h3>
+
+<p>
+標準ライブラリのパッケージは、<code>"fmt"</code>や<code>"net/http"</code>のように短いパスを与えられています。自分で作ったパッケージについては、将来追加されるライブラリやその他の外部ライブラリと衝突しないであろうベースパスを選ぶ必要があります。
+</p>
+
+<p>
+コードをどこかのソースレポジトリに置く場合は、ベースパスとしてソースレポジトリのルートを利用する必要があります。例えば、<code>github.com/user</code>にある<a href="https://github.com/">GitHub</a>アカウントを利用している場合には、これがベースパスとなります。
+</p>
+
+<p>
+ビルドができる状態になる前にコードをリモートレポジトリに公開する必要はないことに留意してください。いつの日にか公開することを見越してコードを構成することはよい行いです。実質的には、標準ライブラリや大Goエコシステムに対してユニークである限り、いずれの任意のパス名も選ぶことができます。
+</p>
+
+<p>
+<code>github.com/user</code>をベースパスに利用します。ソースコードを置くワークスペースの中に以下のようにディレクトリを作成してください。
+</p>
+
+<pre>
+$ <b>mkdir -p $GOPATH/src/github.com/user</b>
+</pre>
+
+
+<h3 id="Command">初めてのプログラム</h3>
+
+<p>
+簡単なプログラムをコンパイルし実行するために、まずパッケージパスを選び（ここでは<code>github.com/user/hello</code>を利用します）、以下のようにワークスペースに対応するパッケージディレクトリを作成します。
+</p>
+
+<pre>
+$ <b>mkdir $GOPATH/src/github.com/user/hello</b>
+</pre>
+
+<p>
+次に、作成したディレクトリに<code>hello.go</code>という名前のファイルを作成し、以下のGoコードを記述します。
+</p>
+
+<pre>
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Printf("Hello, world.\n")
+}
+</pre>
+
+<p>
+これで以下のように<code>go</code>ツールでプログラムをビルドし、インストールできるようになります。
+</p>
+
+<pre>
+$ <b>go install github.com/user/hello</b>
+</pre>
+
+<p>
+システムのどこからでもこのコマンドを実行することができます。<code>go</code>ツールは<code>GOPATH</code>で指定されたワークスペース内の<code>github.com/user/hello</code>パッケージを検索することでソースコードを見つけ出します。
+</p>
+
+<p>
+以下のように、対象のパッケージディレクトリから<code>go install</code>を実行する場合にはパッケージパスを省略することもできます。
+</p>
+
+<pre>
+$ <b>cd $GOPATH/src/github.com/user/hello</b>
+$ <b>go install</b>
+</pre>
+
+<p>
+このコマンドは<code>hello</code>コマンドをビルドし、実行可能バイナリを生成します。さらにそのバイナリを<code>hello</code>という名前（Windowsでは<code>hello.exe</code>）でワークスペースの<code>bin</code>ディレクトリにインストールします。上記の例では、<code>$GOPATH/bin/hello</code>（つまり、<code>$HOME/go/bin/hello</code>）となります。
+</p>
+
+<p>
+<code>go</code>ツールはエラーが発生した際にのみ出力をプリントします。つまり、これらのコマンドで何も出力されなかった場合には正しく実行されたことになります。
+</p>
+
+<p>
+これで以下のようにコマンドラインにフルパスを入力することでプログラムを実行できるようになります。
+</p>
+
+<pre>
+$ <b>$GOPATH/bin/hello</b>
+Hello, world.
+</pre>
+
+<p>
+もしくは、<code>$GOPATH/bin</code>が<code>PATH</code>に追加されていれば、以下のようにバイナリ名を入力するだけです。
+</p>
+
+<pre>
+$ <b>hello</b>
+Hello, world.
+</pre>
+
+<p>
+ソース管理システムを利用している場合は、このときがレポジトリを初期化し、ファイルを追加し、最初の変更をコミットするのに適したタイミングです。もう一度確認しておきますが、このステップは任意です。Goコードを書くのにソース管理が必要だということではありません。
+</p>
+
+<pre>
+$ <b>cd $GOPATH/src/github.com/user/hello</b>
+$ <b>git init</b>
+Initialized empty Git repository in /home/user/go/src/github.com/user/hello/.git/
+$ <b>git add hello.go</b>
+$ <b>git commit -m "initial commit"</b>
+[master (root-commit) 0b4507d] initial commit
+ 1 file changed, 1 insertion(+)
+  create mode 100644 hello.go
+</pre>
+
+<p>
+リモートレポジトリへのコードのプッシュの方法は、読者の皆さんへの演習課題として残しておきます。
+</p>
+
+
+<h3 id="Library">初めてのライブラリ</h3>
+
+<p>
+ライブラリを書いて、それを<code>hello</code>プログラムで利用しましょう。
+</p>
+
+<p>
+ここでも、最初のステップはパッケージパスを選び（ここでは<code>github.com/user/newmath</code>とします）、以下のようにパッケージディレクトリを作成することです。
+</p>
+
+<pre>
+$ <b>mkdir $GOPATH/src/github.com/user/newmath</b>
+</pre>
+
+<p>
+次に、このディレクトリに<code>sqrt.go</code>という名前のファイルを作成し、以下の内容を記述します。
+</p>
+
+<pre>
+// newmathパッケージはちょっとしたサンプルパッケージです。
+package newmath
+
+// Sqrtはxの平方根の近似値を返します。
+func Sqrt(x float64) float64 {
+	z := 1.0
+	for i := 0; i &lt; 1000; i++ {
+		z -= (z*z - x) / (2 * z)
+	}
+	return z
+}
+</pre>
+
+<p>
+そして、<code>go build</code>でパッケージがコンパイルできることをテストします。
+</p>
+
+<pre>
+$ <b>go build github.com/user/newmath</b>
+</pre>
+
+<p>
+もしくは、パッケージのソースディレクトリで作業している場合には、単に以下のようにします。
+</p>
+
+<pre>
+$ <b>go build</b>
+</pre>
+
+<p>
+このコマンドはファイルの出力を行いません。ファイルを出力するには、<code>go install</code>を用いる必要があります。これにより、ワークスペースの<code>pkg</code>ディレクトリにパッケージオブジェクトが生成されます。
+</p>
+
+<p>
+<code>newmath</code>パッケージがビルドされたことを確認してから、元の<code>hello.go</code>（<code>$GOPATH/src/github.com/user/hello</code>にある）を以下のように修正してこのパッケージを利用するようにします。
+</p>
+
+<pre>
+package main
+
+import (
+	"fmt"
+
+	<b>"github.com/user/newmath"</b>
+)
+
+func main() {
+	fmt.Printf("Hello, world.  <b>Sqrt(2) = %v\n", newmath.Sqrt(2)</b>)
+}
+</pre>
+
+<p>
+<code>go</code>ツールがパッケージやバイナリをインストールする際には必ず、それらが持つすべての依存関係がインストールされます。ですので以下のように<code>hello</code>プログラムをインストールする場合には、
+</p>
+
+<pre>
+$ <b>go install github.com/user/hello</b>
+</pre>
+
+<p>
+<code>newmath</code>が同時に自動でインストールされます。
+</p>
+
+<p>
+この新しいバージョンのプログラムを実行すると、以下のように何らかの数値が出力されることを確認できるはずです。
+</p>
+
+<pre>
+$ <b>hello</b>
+Hello, world.  Sqrt(2) = 1.414213562373095
+</pre>
+
+<p>
+上記のステップを行うと、ワークスペースは以下のような状態になっているはずです。
+</p>
+
+<pre>
+bin/
+    hello              # コマンド実行形式ファイル
+pkg/
+    linux_amd64/       # ここはOSとアーキテクチャ名が反映されます
+        github.com/user/
+            newmath.a  # パッケージオブジェクト
+src/
+    github.com/user/
+        hello/
+            hello.go   # コマンドソース
+        newmath/
+            sqrt.go    # パッケージソース
+</pre>
+
+<p>
+<code>go install</code>を実行すると、<code>newmath.a</code>オブジェクトが<code>pkg/linux_amd64</code>の中にソースディレクトリと同じ階層で置かれます。これは、今後の<code>go</code>ツールの呼び出しの際、既存のパッケージオブジェクトを検索することで不必要なパッケージの再コンパイルを避けるようにするためです。<code>linux_amd64</code>の部分はクロスコンパイルを可能にするためにあり、利用しているオペレーティングシステムとアーキテクチャの名前が反映されます。
+</p>
+
+<p>
+Goのコマンド実行形式ファイルは静的リンクされており、Goプログラムの実行にパッケージオブジェクトは必要ありません。
+</p>
+
+
+<h3 id="PackageNames">パッケージ名</h3>
+
+<p>
+Goソースファイルの最初のステートメントは以下のようでなければなりません。
+</p>
+
+<pre>
+package <i>name</i>
+</pre>
+
+<p>
+<code><i>name</i></code>の部分にはインポートするパッケージのデフォルト名が入ります。（パッケージ内のすべてのファイルで同じ<code><i>name</i></code>を利用します。）
+</p>
+
+<p>
+Goの規則ではパッケージ名はインポートパスの最後の要素となります。例えば、"<code>crypto/rot13</code>"というパッケージをインポートする場合は、<code>rot13</code>とします。
+</p>
+
+<p>
+実行形式ファイルのコマンドは常に<code>package main</code>とする必要があります。
+</p>
+
+<p>
+パッケージ名は、ある1つのバイナリにリンクされたすべてのパッケージを通じて一意である必要はありません。インポートパス（完全ファイル名）のみ一意である必要があります。
+</p>
+
+<p>
+Goの命名規則についてさらに詳しく学びたい場合は、<a href="/doc/effective_go.html#names">Effective Go</a>をご覧ください。
+</p>
+
+
+<h2 id="Testing">テスティング</h2>
+
+<p>
+Goは<code>go test</code>コマンドと<code>testing</code>パッケージで構成される軽量なテストフレームワークを提供します。
+</p>
+
+<p>
+テストを書くには、<code>_test.go</code>で終わる名前のファイルを作成し、<code>func (t *testing.T)</code>というシグネチャの<code>TestXXX</code>という名前の関数を作成します。テストフレームワークはこれらの関数を一つ一つ実行し、<code>t.Error</code>や<code>t.Fail</code>といったフェイル関数が呼ばれると、テストが失敗したとみなします。
+</p>
+
+<p>
+<code>newmath</code>パッケージのテストを追加しましょう。<code>$GOPATH/src/github.com/user/newmath/sqrt_test.go</code>というファイルを作成し、以下のGoコードを記述してください。
+</p>
+
+<pre>
+package newmath
+
+import "testing"
+
+func TestSqrt(t *testing.T) {
+	const in, out = 4, 2
+	if x := Sqrt(in); x != out {
+		t.Errorf("Sqrt(%v) = %v, want %v", in, x, out)
+	}
+}
+</pre>
+
+<p>
+そして、<code>go test</code>でテストを実行しましょう。
+</p>
+
+<pre>
+$ <b>go test github.com/user/newmath</b>
+ok  	github.com/user/newmath 0.165s
+</pre>
+
+<p>
+いつもどおり、<code>go</code>ツールをパッケージのディレクトリで実行する場合は、パッケージのパスを省略できます。
+</p>
+
+<pre>
+$ <b>go test</b>
+ok  	github.com/user/newmath 0.165s
+</pre>
+
+<p>
+さらに詳しい情報については、<code><a href="/cmd/go/#hdr-Test_packages">go help test</a></code>を実行し、<a href="/pkg/testing/">testingパッケージドキュメント</a>をご覧ください。
+</p>
+
+
+<h2 id="remote">リモートパッケージ</h2>
+
+<p>
+GitやMercurialといったリビジョン管理システムを利用したパッケージのソースコードを利用する場合、インポートパスにはどのリビジョン管理システムから取得するかを記述するようにします。<code>go</code>はこのプロパティを利用してリモートレポジトリからパッケージを自動的にフェッチします。例えば、このドキュメントに記述されている例はGoogle Codeにホストされている<code><a href="http://code.google.com/p/go.example">code.google.com/p/go.example</a></code> Mercurialレポジトリにも収録されています。パッケージインポートパスにレポジトリのURLが含まれている場合は、以下のように<code>go get</code>で自動的にフェッチ、ビルド、インストールができます。
+</p>
+
+<pre>
+$ <b>go get code.google.com/p/go.example/hello</b>
+$ <b>$GOPATH/bin/hello</b>
+Hello, world.  Sqrt(2) = 1.414213562373095
+</pre>
+
+<p>
+指定されたパッケージがワークスペースに存在しない場合、<code>go get</code>は<code>GOPATH</code>で最初に指定されているワークスペース内に配置します。（パッケージがすでに存在する場合、<code>go get</code>はリモートからのフェッチをスキップし、<code>go install</code>と同じように振る舞います。）
+</p>
+
+<p>
+上記の<code>go get</code>コマンドを発行すると、ワークスペースのディレクトリツリーは以下のようになります。
+</p>
+
+<pre>
+bin/
+    hello                 # コマンド実行形式ファイル
+pkg/
+    linux_amd64/
+        code.google.com/p/go.example/
+            newmath.a     # パッケージオブジェクト
+        github.com/user/
+            newmath.a     # パッケージオブジェクト
+src/
+    code.google.com/p/go.example/
+        hello/
+            hello.go      # コマンドソース
+        newmath/
+            sqrt.go       # パッケージソース
+            sqrt_test.go  # テストソース
+    github.com/user/
+        hello/
+            hello.go      # コマンドソース
+        newmath/
+            sqrt.go       # パッケージソース
+            sqrt_test.go  # テストソース
+</pre>
+
+<p>
+Google Codeにホストされている<code>hello</code>は同じレポジトリ内の<code>newmath</code>パッケージに依存しています。<code>hello.go</code>ファイル内のインポートには同じインポートパスの規則を用います。そのため、<code>go get</code>コマンドは依存するパッケージも同様に場所の特定・インストールをすることができます。
+</p>
+
+<pre>
+import "code.google.com/p/go.example/newmath"
+</pre>
+
+<p>
+この規則により、自分で作ったGoパッケージを他の人が非常に容易に使えるようになります。<a href="http://code.google.com/p/go-wiki/wiki/Projects">Go Wiki</a>や<a href="http://godoc.org/">godoc.org</a>に外部のGoプロジェクトの一覧があります。
+</p>
+
+<p>
+<code>go</code>ツールでリモートレポジトリを利用する際のさらに詳しい情報は、<code><a href="/cmd/go/#hdr-Remote_import_paths">go help importpath</a></code>をご覧ください。
+</p>
+
+
+<h2 id="next">次のステップ</h2>
+
+<p>
+Goの新しい安定バージョンのリリース通知を受け取るには<a href="http://groups.google.com/group/golang-announce">golang-announce</a>メーリングリストを購読しましょう。
+</p>
+
+<p>
+きれいで慣用的なGoコードを書くためのティップスは<a href="/doc/effective_go.html">Effective Go</a>をご覧ください。
+</p>
+
+<p>
+きちんと言語を学ぶには<a href="http://tour.golang.org/">A Tour of Go</a>を利用しましょう。
+</p>
+
+<p>
+Go言語とライブラリ、ツールに関するさらに詳細な記事については<a href="/doc/#articles">documentation page</a>をご覧ください。
+</p>
+
+
+<h2 id="help">ヘルプを得るには</h2>
+
+<p>
+リアルタイムヘルプについては、<a href="http://freenode.net/">Freenode</a> IRCサーバの<code>#go-nuts</code>で協力的なGopher達に質問してください。
+</p>
+
+<p>
+Go言語のディスカッションのためのオフィシャルメーリングリストは<a href="http://groups.google.com/group/golang-nuts">Go Nuts</a>です。
+</p>
+
+<p>
+バグのレポートには<a href="http://code.google.com/p/go/issues/list">Go issue tracker</a>を利用してください。
+</p>
