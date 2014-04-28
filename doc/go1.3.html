@@ -1,0 +1,384 @@
+<!--{
+	"Title": "Go 1.3 リリースノート",
+	"Path":  "/doc/go1.3",
+	"Template": true
+}-->
+
+<!--
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/?r=e141dda580af22ba69b87904afcfd9d1be14d589
+-->
+
+<h2 id="introduction">Go1.3のイントロダクション</h2>
+
+<p>
+Go1.3のリリースは、Go1.2をリリースしてから6ヶ月後を予定しています。
+そして、いかなる言語仕様の変更もありません。
+Go1.3では、ガベージコレクションやコンパイラツールチェーンの改善に集中しています。
+特に大規模なプロジェクトにおいて、ビルドが高速になるでしょう。
+他にも全体的にパフォーマンスの大幅な改善やサポート環境の追加(Solaris, Plan9)、
+GoogleのNative Client architecture(NaCl)のサポートが含まれます。
+また同期に関連したメモリモデルの改良もありますが、これも重要です。
+当然、<a href="/doc/go1compat.html">後方互換性</a>は保っています。
+Go1.3に移行しても、大抵は変更なしでも問題ないはずです。
+</p>
+
+<h2 id="os">サポート対象OSに関する変更点</h2>
+
+<h3 id="nacl">Native Clientのサポート</h3>
+
+<p>
+Go1.3で、Native Clientの仮想マシンアーキテクチャのサポートが復活します。
+32ビットインテルアーキテクチャ(<code>GOARCH=386</code>)、
+または64ビットでポインタは32ビット(<code>GARCH=amd64p32</code>)のどちらかの環境で動作します。
+ARMはまだサポートしていません。Portable Native Client (PNaCl)と混同しないように注意して下さい。
+Navite Clinetについての詳細は<a href="https://developers.google.com/native-client/dev/">ここ</a>を参照してください。
+またGoのバージョンを指定する方法については<a href="http://golang.org/wiki/NativeClient">ここ</a>に記載があります。
+</p>
+
+<h3 id="solaris">Solarisのサポート</h3>
+
+<p>
+Go1.3では、amd64アーキテクチャ上で動作するSolarisをサポートしています。ただし今のところ、これはExperimentalです。
+</p>
+
+<h3 id="plan9">Plan 9のサポート</h3>
+
+<p>
+Go1.3では、386アーキテクチャ上で動作するPlan9をサポートしています。ただし今のところ、これはExperimentalです。
+</p>
+
+<h3 id="win2000">Windows 2000のサポート終了</h3>
+
+<p>
+マイクロソフトは2010年にWindows 2000をサポートを終了しました。
+<a href="https://codereview.appspot.com/74790043">例外機構(Unixにおけるシグナル)の実装が難しい</a>ため、
+Go1.3でも同様にサポートを終了します。
+</p>
+
+
+<h3 id="freebsd">Free BSDのサポート</h3>
+
+<p>
+公式にアナウンスしていませんでしたが、Go1.2からFreeBSD(8以上)をサポートしています。
+</p>
+
+<p>
+Go1.3をFreeBSDで使用するためには、kernelに<code>COMPAT_FREEBSD32</code> flagを
+設定してコンパイルしなければいけません。
+</p>
+
+<h2 id="memory">メモリモデルの変更点</h2>
+
+<p>
+Go1.3では、メモリモデルに<a href="https://codereview.appspot.com/75130045">新しい規約</a>を追加しました。
+これはバッファ付きチャネルの送受信に関するもので、それが簡易なセマフォとして使用できることを明示しました。
+チャネルへの送信は資源を獲得し、チャネルからの受信は資源を開放します。
+言語仕様の変更ではなく、コミュニケーションに期待される性質を明らかにしただけです。
+</p>
+
+<h2 id="impl">実装とツールの変更点</h2>
+
+<h3 id="stacks">スタック</h3>
+
+<p>
+Go1.3では、ゴルーチンのスタック実装が以前のセグメント方式からcontiguous方式に変更されています。
+実行中のゴルーチンがさらにスタック領域を必要としたとき、スタックはメモリ上のより大きな単一領域に転送されます。
+セグメント境界を跨いで計算を繰り返すようなケースでは、転送操作のオーバーヘッドは無視できるし、
+さらに”ホットスポット”問題も解消できます。
+パフォーマンスの詳細は、<a href="http://golang.org/s/contigstacks">design document</a>を見て下さい。
+</p>
+
+<h3 id="stack_size">スタックサイズ</h3>
+
+<p>
+Go1.2では最小スタックサイズを8kバイトに変更しましたが、新しいスタックモデルでは4kバイトに戻しました。
+</p>
+
+<h3 id="garbage_collector">ガベージコレクタの変更点</h3>
+
+<p>
+これまで、ガベージコレクタがヒープ領域の値の評価は<em>正確</em>でした。
+Go1.3では、スタック上の値も同様に正確に評価されます。
+つまり、ポインタでないint型の値がポインタに間違われたり、未使用メモリとして再利用されるようなことはありません。
+</p>
+
+<h3 id="liblink">リンカ</h3>
+
+<p>
+Goリンカの<a href="http://golang.org/s/go13linker">オーバーホール</a>の一環で、
+コンパイラとリンカはリファクタリングされました。
+リンカは依然としてCで実装されています。しかし、リンカの一部だった命令選択は、
+<code>liblink</code>と呼ばれる新しいライブラリを実装して、コンパイラで実行されるようになりました。
+パッケージの初回コンパイルで命令選択を一度しか行わないので、大規模なプロジェクトのコンパイルは大幅に高速になります。
+</p>
+
+<p>
+<em>更新</em>: これは大きな内部変更ですが、プログラムには影響しないはずです。
+</p>
+
+<h3 id="gccgo">gccgoのステータス</h3>
+
+<p>
+GCC4.9では、Go1.2(1.3ではなく)をサポートする予定です。GCCとGoのリリース計画は同期していません。
+よってGo1.3は開発ブランチで使用可能ですが、おそらく次のGCC4.10ではGo1.4がサポートされる予定です。
+</p>
+
+<h3 id="gocmd">Goコマンドの変更点</h3>
+
+<p>
+<a href="/cmd/go/"><code>cmd/go</code></a>コマンドに新しい機能がいくつか追加されました。
+新たに、<a href="/cmd/go/"><code>go run</code></a>と<a href="/cmd/go/"><code>go test</code></a>サブコマンドは
+<code>-exec</code>オプションをサポートしました。
+これは、ビルドしたバイナリを実行するための別の方法を指定できます。直接の目的は、NaClをサポートすることです。
+</p>
+
+<p>
+競合ディテクタが有効になっているとき、<a href="/cmd/go/"><code>go test</code></a>サブコマンドのカバレッジサポートは
+自動的にカバレッジモードに<code>-atomic</code>を指定します。
+これは、カバレッジカウンタへの安全でないアクセスが誤って検出されてしまうことを防ぐためです。
+</p>
+
+<p>
+<a href="/cmd/go/"><code>go test</code></a>サブコマンドは、
+テストファイルがない場合でもパッケージを全てビルドするようになりました。
+以前は、テストファイルがない場合は何もしませんでした。
+</p>
+
+<p>
+最後に、goコマンドは、cgoを通じてObjective-Cファイル(ファイル拡張子が<code>.m</code>)をインポートする
+パッケージをサポートしています。
+</p>
+
+<h3 id="gc_flag">コマンドライン引数の解析</h3>
+
+<p>
+Goコマンドツールチェーンで、アセンブラはGo flagパッケージと同じコマンドライン引数解析ルールを使用するようになりました。
+これは伝統的なUnixコマンドライン引数解析を元にしています。もしスクリプト内で直接ツールを呼び出している場合には影響を受けるかもしれません。
+例えば、<code>go tool 6a -SDfoo</code>は<code>go tool 6a -S -D foo</code>と書かなければいけません。
+(同様の変更は、<a href="/doc/go1.1#gc_flag">Go 1.1</a>のときにリンカとコンパイラにもありました。)
+</p>
+
+<h3 id="misc">その他</h3>
+
+<p>
+ベンチマーク結果のパフォーマンスを比較するためのツール<code>misc/benchcmp</code>が書き直されました。
+shellとawkで書かれたスクリプトがメインレポジトリに存在しましたが、現在はGoで実装されていて<code>go.tools</code>レポジトリに含まれています。
+ドキュメントは<a href="http://godoc.org/code.google.com/p/go.tools/cmd/benchcmp">ここ</a>にあります。
+</p>
+
+<p>
+Goのディストリビューションを構築する人のため、<code>misc/dist</code>に存在したツールを移動しました。
+これらのツールは、現在は<code>misc/makerelease</code>にあります。
+</p>
+
+
+<h2 id="performance">パフォーマンス</h2>
+
+<p>
+Go1.3では、ランタイムやガベージコレクション、さらに標準ライブラリにもいくつか変更が入っています。
+そのため、たくさんのケースで性能が改善されています。
+重要な点を上げると、
+</p>
+
+<ul>
+
+<li>
+上記でも言及したように、デフォルトのスタックサイズが8kバイトから4kバイトに変更されています。
+</li>
+
+<li>
+ランタイムはdeferをより効率的に扱うようになりました。deferを呼び出すようなゴルーチンは2kバイトほどメモリ使用量が減ります。
+</li>
+
+<li>
+並行ガベージコレクタのアルゴリズムが改善(並列性の向上、ページサイズの増加)されたことで、ガベージコレクタが早くなりました。
+ガベージコレクタの停止時間は、平均して50から70%は減るでしょう。
+</li>
+
+<li>
+競合ディテクタ(<a href="http://golang.org/doc/articles/race_detector.html">こちらのガイド</a>も参照して下さい)の性能が改善され、
+だいたい40%ほど速くなりました。
+</li>
+
+<li>
+<a href="/pkg/regexp/"><code>regexp</code></a>パッケージの性能が改善されました。
+簡単な表現では1パス正規表現エンジンが選択されるため、より速く処理されます。
+この正規表現エンジンの選択は自動で行われるため、ユーザは気にする必要はありません。
+</li>
+
+</ul>
+
+<p>
+また、ランタイムはスタックダンプにゴルーチンのブロックされた時間を含むようになりました。
+これは、デッドロックやパフォーマンス問題をデバッグするときに役立ちます。
+</p>
+
+<h2 id="library">標準ライブラリの変更点</h2>
+
+<h3 id="new_packages">新しいパッケージ</h3>
+
+<p>
+新たに<a href="/pkg/debug/plan9obj/"><code>debug/plan9obj</code></a>パッケージが追加されました。
+これは、Plan9の<a href="http://plan9.bell-labs.com/magic/man2html/6/a.out">a.out</a>オブジェクトファイル向けの実装です。
+</p>
+
+<h3 id="major_library_changes">大規模な変更点</h3>
+
+<p>
+<a href="/pkg/crypto/tls/"><code>crypto/tls</code></a>に存在していたバグによって、気づかないうちにTLS認証をスキップできてしまいました。
+Go1.3で、このバグは修正されています。ServerNameかInsecureSkipVerifyのどちらかは必ず指定しなければいけません。
+ServerNameが指定されている場合、ServerNameの使用が強制されます。
+これは破壊的変更です。もしこれまでの安全でない振る舞いに依存したコードを書いている場合は、コードの変更が必要です。
+</p>
+
+<p>
+標準ライブラリに<a href="/pkg/sync/#Pool"><code>sync.Pool</code></a>という重要な型が追加されました。
+これを利用することで、自動でメモリが再利用されるようなキャッシュ機構のようなものを簡単に実装できます。
+</p>
+
+<p>
+<a href="/pkg/testing/"><code>testing</code></a>パッケージのベンチマーキングヘルパー、
+<a href="/pkg/testing/#B"><code>B</code></a>に<a href="/pkg/testing/#B.RunParallel"><code>RunParallel</code></a>メソッドが追加されました。
+これを使用すると、複数のCPUで簡単にベンチマークが実行できるようになります。
+</p>
+
+<p>
+<em>更新</em>: crypto/tlsパッケージの修正は既存のコードを壊してしまうかもしれません。
+しかし、そのようなコードにはバグがあるので、更新すべきです。
+</p>
+
+<h3 id="minor_library_changes">小規模な変更点</h3>
+
+<p>
+以下に、標準ライブラリへの小規模な変更点をまとめます。そのほとんどは新たに追加されたものです。
+より詳細な情報は関係するパッケージのドキュメントを参照して下さい。
+</p>
+
+<ul>
+
+<li>
+複素数の累乗を計算する<a href="/pkg/math/cmplx/#Pow"><code>Pow</code></a>関数に関して、
+1番目の引数が0だった場合の振る舞いを定義しました。このケースは、以前は定義されていませんでした。
+詳細はこちらの<a href="/pkg/math/cmplx/#Pow">ドキュメント</a>を参照して下さい。
+</li>
+
+<li>
+<a href="/pkg/crypto/tls/"><code>crypto/tls</code></a>パッケージに、
+<a href="/pkg/crypto/tls/#DialWithDialer"><code>DialWithDialer</code></a>関数が追加されました。
+これを使うと、既存のdialerを使用してTLS接続できます。タイムアウトのような接続オプションはより簡単に制御できるようになります。
+また、<a href="/pkg/crypto/tls/#ConnectionState"><code>ConnectionState</code></a>構造体のconnectionを使って、
+TLSバージョンを通知します。
+</li>
+
+<li>
+<a href="/pkg/crypto/tls/"><code>crypto/tls</code></a>パッケージの
+<a href="/pkg/crypto/x509/#CreateCertificate"><code>CreateCertificate</code></a>関数で、
+PKCS#10証明書署名要求の解析をサポートします。
+</li>
+
+<li>
+<code>fmt</code>パッケージの整形出力関数で、<code>%F</code>を<code>%f</code>の別名として定義します。
+これは浮動小数点を出力するときに使用できます。
+</li>
+
+<li>
+<a href="/pkg/net/http/"><code>net/http</code></a>パッケージは、クライアント要求を行う際に
+新たに追加された<a href="/pkg/net/http/#Response"><code>Response.TLS</code></a>フィールドで使用するために、
+TLS接続のプロパティを公開します。
+</li>
+
+<li>
+<a href="/pkg/net/http/"><code>net/http</code></a>パッケージは
+<a href="/pkg/net/http/#Server"><code>Server.ErrorLog</code></a>に任意のエラーロガーを指定できます。
+デフォルトでは、すべての標準エラーに出力されます。
+</li>
+
+<li>
+<a href="/pkg/net/http/"><code>net/http</code></a>パッケージは
+<a href="/pkg/net/http/#Server.SetKeepAlivesEnabled"><code>Server.SetKeepAlivesEnabled</code></a>を使用して、
+HTTPのkeep-alivesを無効にできます。
+デフォルトは引き続き、keep-alivesが有効になっています(複数の接続でコネクションを再利用する)。
+リソースに成約のある場合やサーバのシャットダウン中などでは、keep-alivesを無効にしたいでしょう。
+</li>
+
+<li>
+<a href="/pkg/net/http/"><code>net/http</code></a>パッケージは、TLSハンドシェイクの待ち時間を制限するため、
+<a href="/pkg/net/http/#Transport"><code>Transport.TLSHandshakeTimeout</code></a>の設定が追加されます。
+最初は、<a href="/pkg/net/http#DefaultTransport"><code>DefaultTransport</code></a>が設定されています。
+</li>
+
+<li>
+<a href="/pkg/net/http/"><code>net/http</code></a>パッケージでは、HTTPクライアントのコードで使われる
+<a href="/pkg/net/http#DefaultTransport"><code>DefaultTransport</code></a>は、
+最初から<a href="http://en.wikipedia.org/wiki/Keepalive#TCP_keepalive">TCP keep-alives</a>が有効になっています。
+他の<a href="/pkg/net/http/#Transport"><code>Transport</code></a>は<code>Dial</code>フィールドが空なので、
+以前と同じように動作します(keep-alivesを使用しない)。
+</li>
+
+<li>
+<a href="/pkg/net/http/"><code>net/http</code></a>パッケージは、
+<a href="/pkg/net/http/#ListenAndServe"><code>ListenAndServe</code></a>、
+または<a href="/pkg/net/http/#ListenAndServeTLS"><code>ListenAndServeTLS</code></a>を使用していると、
+サーバへのリクエストを受信は<a href="http://en.wikipedia.org/wiki/Keepalive#TCP_keepalive">TCP keep-alives</a>を有効にします。
+他の方法でサーバを起動した場合は有効になっていません。
+</li>
+
+<li>
+<a href="/pkg/net/http/"><code>net/http</code></a>パッケージは、サーバ接続のさまざまな段階をフックするためにオプションとして
+<a href="/pkg/net/http/#Server"><code>Server.ConnState</code></a>コールバックを提供します
+(<a href="/pkg/net/http/#ConnState"><code>ConnState</code></a>を参照)。
+これは、レート制限や正常なシャットダウンを実装するために使用できます。
+</li>
+
+<li>
+<a href="/pkg/net/http/"><code>net/http</code></a>パッケージのHTTPクライアントは、
+クライアントを使用した要求にエンドツーエンドのタイムアウトを指定するオプションとして
+<a href="/pkg/net/http/#Client"><code>Client.Timeout</code></a>フィールドを持っています。
+</li>
+
+<li>
+<a href="/pkg/net/"><code>net</code></a>パッケージは、<a href="/pkg/net/#Dialer"><code>Dialer</code></a>構造体に
+コネクションのkeep-alives間隔を指定するための<code>keep-alives</code>オプションを持っています。
+</li>
+
+<li>
+<a href="/pkg/net/http/"><code>net/http</code></a>パッケージの<a href="/pkg/net/http/#Transport"><code>Transport</code></a>は、
+エラーが起こったときも一貫して<a href="/pkg/net/http/#Request"><code>Request.Body</code></a>を解放します。
+</li>
+
+<li>
+<a href="/pkg/os/exec/"><code>os/exec</code></a>パッケージは、ドキュメントが常にバイナリの相対パスに関連して述べたものが実装されます。
+特にバイナリのファイル名にパス区切り文字が含まれていない場合は、<a href="/pkg/os/exec/#LookPath"><code>LookPath</code></a>を呼び出すだけです。
+</li>
+
+<li>
+メインのゴルーチンが<a href="/pkg/runtime/#Goexit"><code>runtime.Goexit</code></a>を呼び出して他のすべてのゴルーチンの実行が終了した場合、
+プログラムは常にクラッシュし、デッドロックを報告します。
+このようなケースで、以前のバージョンは一貫性がありませんでした。
+ほとんどのケースでデッドロックを報告していましたが、いくつかの簡単なケースでは問題なく終了していました。
+</li>
+
+<li>
+<a href="/pkg/strconv/"><code>strconv</code></a>パッケージの
+<a href="/pkg/strconv/#CanBackquote"><code>CanBackquote</code></a>関数は、
+DEL文字(U+007 F)は非印刷と見なします。
+</li>
+
+<li>
+Windowsにおいて、<a href="/pkg/syscall/"><code>syscall</code></a>パッケージは、
+既存の<a href="/pkg/syscall/#NewCallback"><code>NewCallback</code></a>関数と一緒に
+新しい<a href="/pkg/syscall/#NewCallbackCDecl"><code>NewCallbackCDecl</code></a>関数を追加することによって
+cdecl呼び出し規約をサポートしています。
+</li>
+
+<li>
+<a href="/pkg/testing/"><code>testing</code></a>パッケージは、<code>panic(nil)</code>の呼び出しを診断します。
+というのもそれはほとんどの場合、エラーであると考えられるからです。
+</li>
+
+<li>
+<a href="/pkg/unicode/"><code>unicode</code></a>パッケージとそれに関連するものは、
+Unicode6.2.0から<a href="http://www.unicode.org/versions/Unicode6.3.0/">Unicode 6.3.0</a>にアップグレードされました。
+</li>
+
+</ul>
