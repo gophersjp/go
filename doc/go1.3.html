@@ -81,8 +81,8 @@ Go1.3では、メモリモデルに<a href="https://codereview.appspot.com/75130
 <h3 id="stacks">スタック</h3>
 
 <p>
-Go1.3では、Goroutineのスタック実装が以前のセグメント方式からcontiguous方式に変更されています。
-実行中のGoroutineがさらにスタック領域を必要としたとき、スタックはメモリ上のより大きな単一領域に転送されます。
+Go1.3では、ゴルーチンのスタック実装が以前のセグメント方式からcontiguous方式に変更されています。
+実行中のゴルーチンがさらにスタック領域を必要としたとき、スタックはメモリ上のより大きな単一領域に転送されます。
 セグメント境界を跨いで計算を繰り返すようなケースでは、転送操作のオーバーヘッドは無視できるし、
 さらに”ホットスポット”問題も解消できます。
 パフォーマンスの詳細は、<a href="http://golang.org/s/contigstacks">design document</a>を見て下さい。
@@ -133,7 +133,7 @@ GCC4.9では、Go1.2(1.3ではなく)をサポートする予定です。GCCとG
 </p>
 
 <p>
-Race Detectorが有効になっているとき、<a href="/cmd/go/"><code>go test</code></a>サブコマンドのカバレッジサポートは
+競合ディテクタが有効になっているとき、<a href="/cmd/go/"><code>go test</code></a>サブコマンドのカバレッジサポートは
 自動的にカバレッジモードに<code>-atomic</code>を指定します。
 これは、カバレッジカウンタへの安全でないアクセスが誤って検出されてしまうことを防ぐためです。
 </p>
@@ -187,7 +187,7 @@ Go1.3では、ランタイムやガベージコレクション、さらに標準
 </li>
 
 <li>
-ランタイムはdeferをより効率的に扱うようになりました。deferを呼び出すようなgoroutineは2kバイトほどメモリ使用量が減ります。
+ランタイムはdeferをより効率的に扱うようになりました。deferを呼び出すようなゴルーチンは2kバイトほどメモリ使用量が減ります。
 </li>
 
 <li>
@@ -196,7 +196,7 @@ Go1.3では、ランタイムやガベージコレクション、さらに標準
 </li>
 
 <li>
-race detector(<a href="http://golang.org/doc/articles/race_detector.html">こちらのガイド</a>も参照して下さい)の性能が改善され、
+競合ディテクタ(<a href="http://golang.org/doc/articles/race_detector.html">こちらのガイド</a>も参照して下さい)の性能が改善され、
 だいたい40%ほど速くなりました。
 </li>
 
@@ -209,7 +209,7 @@ race detector(<a href="http://golang.org/doc/articles/race_detector.html">こち
 </ul>
 
 <p>
-また、ランタイムはスタックダンプにgoroutineのブロックされた時間を含むようになりました。
+また、ランタイムはスタックダンプにゴルーチンのブロックされた時間を含むようになりました。
 これは、デッドロックやパフォーマンス問題をデバッグするときに役立ちます。
 </p>
 
@@ -352,7 +352,7 @@ HTTPのkeep-alivesを無効にできます。
 </li>
 
 <li>
-メインのgoroutineが<a href="/pkg/runtime/#Goexit"><code>runtime.Goexit</code></a>を呼び出して他のすべてのGoroutineの実行が終了した場合、
+メインのゴルーチンが<a href="/pkg/runtime/#Goexit"><code>runtime.Goexit</code></a>を呼び出して他のすべてのゴルーチンの実行が終了した場合、
 プログラムは常にクラッシュし、デッドロックを報告します。
 このようなケースで、以前のバージョンは一貫性がありませんでした。
 ほとんどのケースでデッドロックを報告していましたが、いくつかの簡単なケースでは問題なく終了していました。
