@@ -67,7 +67,7 @@ run: update_doc
 	git add -A .;\
 	git commit -a -m "Save godep"
 
-deploy: {APP}/.git
+deploy: build_doc {APP}/.git
 	cd ${APP};\
 	git remote add heroku-deploy ${HEROKU};\
 	git push -f heroku-deploy master;\
