@@ -6,7 +6,7 @@ export PATH:=${GOPATH}/bin:${PATH}
 
 _GOROOT:=${WORKSPACE}/go
 GOREPO=code.google.com/p
-APP=${GOPATH}/src/godocjp
+APP=${GOPATH}/src/godoc
 
 .PHONY: all
 all: update build_doc
