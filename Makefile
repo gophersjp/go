@@ -19,12 +19,11 @@ clean:
 tr_status:=${_GOROOT}/status/translate.html
 tr_tool:=github.com/atotto/gophersjp-go-util/cmd/translate-status
 ${tr_status}: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
-	echo ${GOPATH}
 	go get -u ${tr_tool}
 	mkdir -p ${_GOROOT}/status
 	translate-status -docroot=$(shell pwd) -goroot=${_GOROOT} -o=$@
 
-build_doc: ${tr_status} ${APP}/doc/godoc.zip
+build_doc: update_doc ${tr_status} ${APP}/doc/godoc.zip
 
 .PHONY: update_doc
 update_doc: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
