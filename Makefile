@@ -16,8 +16,6 @@ clean:
 	rm -rf ${APP}
 	rm -rf ${_GOROOT}/*
 
-build_doc: ${tr_status} ${APP}/doc/godoc.zip
-
 tr_status:=${_GOROOT}/status/translate.html
 tr_tool:=github.com/atotto/gophersjp-go-util/cmd/translate-status
 ${tr_status}: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
@@ -25,6 +23,8 @@ ${tr_status}: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
 	go get -u ${tr_tool}
 	mkdir -p ${_GOROOT}/status
 	translate-status -docroot=./ -goroot=${_GOROOT} -o=$@
+
+build_doc: ${tr_status} ${APP}/doc/godoc.zip
 
 .PHONY: update_doc
 update_doc: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
@@ -50,6 +50,10 @@ ${APP}/doc/godoc.zip: update_doc
 .PHONY: run
 run: update_doc
 	GOPATH="";godoc -http=:6060 -play -goroot=${_GOROOT}
+
+.PHONY: godep
+godep:
+	which godep ||go get -u github.com/kr/godep
 
 {APP}/.git: godep
 	cd ${GOPATH}/src/${GOREPO}/go.tools; hg checkout ${GODOC_REV}
@@ -81,7 +85,4 @@ ${_GOROOT}:
 
 ${GOPATH}/src/${GOREPO}/go.tools:
 	hg clone -u tip https://code.google.com/p/go.tools $@
-
-godep:
-	which godep ||go get -u github.com/kr/godep
 
