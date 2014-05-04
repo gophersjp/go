@@ -22,7 +22,7 @@ ${tr_status}: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
 	echo ${GOPATH}
 	go get -u ${tr_tool}
 	mkdir -p ${_GOROOT}/status
-	translate-status -docroot=./ -goroot=${_GOROOT} -o=$@
+	translate-status -docroot=$(shell pwd) -goroot=${_GOROOT} -o=$@
 
 build_doc: ${tr_status} ${APP}/doc/godoc.zip
 
