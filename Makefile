@@ -51,7 +51,7 @@ ${APP}/doc/godoc.zip: update_doc
 run: update_doc
 	GOPATH="";godoc -http=:6060 -play -goroot=${_GOROOT}
 
-{APP}/.git:
+{APP}/.git: godep
 	cd ${GOPATH}/src/${GOREPO}/go.tools; hg checkout ${GODOC_REV}
 
 	mkdir -p ${APP}
