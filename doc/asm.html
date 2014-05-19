@@ -1,25 +1,47 @@
 <!--{
-	"Title": "A Quick Guide to Go's Assembler",
+	"Title": "Goアセンブラ入門",
 	"Path":  "/doc/asm"
 }-->
+
+<!--
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/asm.html?r=22dd1c22fd762114dff497e18ac52e765cb98e9e
+-->
 
 <h2 id="introduction">A Quick Guide to Go's Assembler</h2>
 
 <p>
+このドキュメントでは、Goコンパイラ(<code>6g</code>や<code>8g</code>など)である<code>gc</code>スイートで使われている、風変わりなアセンブリ言語について紹介します。
+ただし、このドキュメントはあまり包括的なものにはなっていません。
+<!--
 This document is a quick outline of the unusual form of assembly language used by the <code>gc</code>
 suite of Go compilers (<code>6g</code>, <code>8g</code>, etc.).
 The document is not comprehensive.
+-->
 </p>
 
 <p>
+Goアセンブラは、Plan 9アセンブラへの入力に基づいています。このアセンブラについては、<a href="http://plan9.bell-labs.com/sys/doc/asm.html">Plan 9のサイト</a>で詳しく解説されています。
+もしアセンブリ言語で書こうとしているなら、Plan 9固有のものではありますが、上記ドキュメントを読むことをお勧めします。
+このドキュメントでは、アセンブリ言語の文法の概要と、Goと相互にやりとりをするアセンブリコードを書く際に独特な部分についてのみ紹介します。
+<!--
 The assembler is based on the input to the Plan 9 assemblers, which is documented in detail
 <a href="http://plan9.bell-labs.com/sys/doc/asm.html">on the Plan 9 site</a>.
 If you plan to write assembly language, you should read that document although much of it is Plan 9-specific.
 This document provides a summary of the syntax and
 describes the peculiarities that apply when writing assembly code to interact with Go.
+-->
 </p>
 
 <p>
+Goアセンブラでまず気をつけなければいけないのは、それは計算機を直接表現したものではないということです。
+いくらかの部分は正確に計算機上で実行されることになりますが、一部はそうではありません。
+これは、コンパイラスイート(<a href="http://plan9.bell-labs.com/sys/doc/compiler.html">こちらの説明</a>もどうぞ)は通常の処理過程ではアセンブラを処理しないためです。
+かわりに、コンパイラは未完成の命令をバイナリ形式で出力します。そして、リンカがそれを完成させます。
+とりわけ、リンカは命令の選択をします。そのため、もし<code>MOV</code>のような命令があっても、リンカが実際に生成する命令はメモリ転送の命令ではなく、クリアやロードの命令かもしれません。
+もちろん、まったく同じ名前の命令を生成することもあります。
+一般に、その計算機固有の演算はそのまま生成される傾向がありますが、一方でメモリ転送のような一般的なものや、サブルーチン呼び出し、リターンのような抽象的なものはそのままは生成されない傾向にあります。
+これについてはアーキテクチャによっても変わり、不正確で申し訳ないのですが、明確な定義はありません。
+<!--
 The most important thing to know about Go's assembler is that it is not a direct representation of the underlying machine.
 Some of the details map precisely to the machine, but some do not.
 This is because the compiler suite (see
@@ -33,9 +55,13 @@ Or it might correspond exactly to the machine instruction with that name.
 In general, machine-specific operations tend to appear as themselves, while more general concepts like
 memory move and subroutine call and return are more abstract.
 The details vary with architecture, and we apologize for the imprecision; the situation is not well-defined.
-</p>
+-->
 
 <p>
+アセンブラのプログラムはこのような中間的で不完全な命令を生成し、リンカへの入力とすることができます。
+もし命令が特定のアーキテクチャのアセンブリでどのようになるかを知りたければ、標準ライブラリの<a href="/pkg/runtime/"><code>runtime</code></a>や<a href="/pkg/math/big/"><code>math/big</code></a>パッケージのソースコードが参考になるでしょう。
+また、コンパイラがどのようなアセンブリコードを出力するかを調べることもできます:
+<!--
 The assembler program is a way to generate that intermediate, incompletely defined instruction sequence
 as input for the linker.
 If you want to see what the instructions look like in assembly for a given architecture, say amd64, there
@@ -43,6 +69,7 @@ are many examples in the sources of the standard library, in packages such as
 <a href="/pkg/runtime/"><code>runtime</code></a> and
 <a href="/pkg/math/big/"><code>math/big</code></a>.
 You can also examine what the compiler emits as assembly code:
+-->
 </p>
 
 <pre>
@@ -70,9 +97,13 @@ $ go tool 6g -S x.go        # or: go build -gcflags -S x.go
 </pre>
 
 <p>
+<code>FUNCDATA</code>と<code>PCDATA</code>ディレクティブは、ガーベッジコレクタによって使用される情報を含みます。これはコンパイラによって挿入されます。
+<!--
 The <code>FUNCDATA</code> and <code>PCDATA</code> directives contain information
 for use by the garbage collector; they are introduced by the compiler.
+-->
 </p> 
+
 
 <!-- Commenting out because the feature is gone but it's popular and may come back.
 
@@ -106,20 +137,35 @@ codeblk [0x2000,0x1d059) at offset 0x1000
 
 -->
 
-<h3 id="symbols">Symbols</h3>
+<h3 id="symbols">シンボル</h3>
 
 <p>
+いくつかのシンボル、例えば<code>PC</code>や<code>R0</code>、<code>SP</code>は予め定義されており、レジスタを指しています。他にも<code>SB</code> (static base)と<code>FP</code> (frame pointer)という二つのシンボルがあります。
+ユーザーが定義したジャンプラベル以外のシンボルは、これらの擬似レジスタのオフセットとして使用できます。
+<!--
 Some symbols, such as <code>PC</code>, <code>R0</code> and <code>SP</code>, are predeclared and refer to registers.
 There are two other predeclared symbols, <code>SB</code> (static base) and <code>FP</code> (frame pointer).
 All user-defined symbols other than jump labels are written as offsets to these pseudo-registers.
+-->
 </p>
 
+
 <p>
+<code>SB</code>擬似レジスタは、メモリの基点として考えることができます。そのため、シンボル<code>foo(SB)</code>は名前<code>foo</code>のメモリ内のアドレスとなります。
+<!--
 The <code>SB</code> pseudo-register can be thought of as the origin of memory, so the symbol <code>foo(SB)</code>
 is the name <code>foo</code> as an address in memory.
+-->
 </p>
 
 <p>
+<code>FP</code>擬似レジスタは仮想的なフレームポインタで、関数の引数を指すために使われています。
+コンパイラは仮想的なフレームポインタを管理し、スタック中の引数を擬似レジスタからのオフセットで指します。
+つまり、<code>0(FP)</code>は関数の第一引数になり、<code>8(FP)</code>は第二引数(64ビット環境では)になり、以下同様です。
+この方法で関数の引数を指すときは、はじめに<code>first_arg+0(FP)</code>や<code>second_arg+8(FP)</code>のようにして、名前をつけるのがよいでしょう。
+いくつかのアセンブラはこれを強制し、単なる<code>0(FP)</code>や<code>8(FP)</code>を拒否します。
+Goのプロトタイプをもつアセンブリ関数なら、<code>go vet</code>が引数名とオフセットが一致しているかどうかをチェックします。
+<!--
 The <code>FP</code> pseudo-register is a virtual frame pointer
 used to refer to function arguments.
 The compilers maintain a virtual frame pointer and refer to the arguments on the stack as offsets from that pseudo-register.
@@ -130,9 +176,16 @@ at the beginning, as in <code>first_arg+0(FP)</code> and <code>second_arg+8(FP)<
 Some of the assemblers enforce this convention, rejecting plain <code>0(FP)</code> and <code>8(FP)</code>.
 For assembly functions with Go prototypes, <code>go vet</code> will check that the argument names
 and offsets match.
+-->
 </p>
 
 <p>
+<code>SP</code>擬似レジスタは仮想的なスタックポインタで、フレームのローカル変数と関数呼び出しの際に用意された引数を指すのに使われています。
+これはローカルスタックフレームの先頭を指すので、参照する際は負のオフセット範囲 [-framesize, 0): <code>x-8(SP)</code>, <code>y-4(SP)</code> を使う必要があります
+実際にSPという名前のレジスタがあるアーキテクチャでは、名前プリフィックスによって、この仮想スタックポインタとそのアーキテクチャの<code>SP</code>レジスタを区別して指すことができます。
+つまり、<code>x-8(SP)</code>と<code>-8(SP)</code>は違うメモリの場所を指します:
+前者は仮想スタックポインタ擬似レジスタを指しますが、後者はハードウェアの<code>SP</code>レジスタを指します。
+<!--
 The <code>SP</code> pseudo-register is a virtual stack pointer
 used to refer to frame-local variables and the arguments being
 prepared for function calls.
@@ -144,12 +197,17 @@ references to the virtual stack pointer from references to the architectural <co
 That is, <code>x-8(SP)</code> and <code>-8(SP)</code> are different memory locations:
 the first refers to the virtual stack pointer pseudo-register, while the second refers to the
 hardware's <code>SP</code> register.
+-->
 </p>
 
 <p>
+命令、レジスタ、アセンブラのディレクティブは常に大文字で書かれており、アセンブリプログラミングはやっかいなものであることを彷彿とさせることでしょう。
+(例外: ARMでの<code>m</code>と<code>g</code>のレジスタリネーム)
+<!--
 Instructions, registers, and assembler directives are always in UPPER CASE to remind you
 that assembly programming is a fraught endeavor.
 (Exceptions: the <code>m</code> and <code>g</code> register renamings on ARM.)
+-->
 </p>
 
 <p>
