@@ -1,0 +1,460 @@
+<!--{
+	"Title": "ソースコードからのインストール",
+	"Path": "/doc/install/source"
+}-->
+
+<!--
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/install-source.html?r=ecf446908276d521b8ed0f8423ca5a91689fb5e4
+-->
+
+<h2 id="introduction">はじめに</h2>
+
+<p>
+Goはオープンソースプロジェクトで、<a href="/LICENSE">BSD-style license</a>のもと配布されています。
+このドキュメントではソースコードを取得し、あなたのマシンでビルドし、実行する方法を説明します。
+</p>
+
+<p>
+ほとんどのユーザーはこのようなことをする必要はありません。かわりに、<a href="/doc/install">インストール</a>で説明されているすでにコンパイルされたバイナリパッケージをインストールほうがより簡単な作業でしょう。
+もしあなたがこのようなプリコンパイルパッケージの中身の開発を手伝いたいなら、さあどうぞ、続けてください。
+</p>
+
+<div class="detail">
+
+<p>
+二つの公式なGoコンパイラツールチェインがあります。
+このドキュメントでは、<code>gc</code> Goコンパイラおよびツール(<code>6g</code>、<code>8g</code>など)について解説します。
+従来のGCCバックエンドによる<code>gccgo</code>を使いたい場合は、<a href="/doc/install/gccgo">Setting up and using gccgo</a>を見てください。
+</p>
+
+<p>
+Goコンパイラは三つの命令セットをサポートしています。
+アーキテクチャによって、コンパイラの品質には差があります。
+</p>
+
+<dl>
+<dt>
+	<code>amd64</code> (別名: <code>x86-64</code>); <code>6g,6l,6c,6a</code>
+</dt>
+<dd>
+	成熟した実装です。コンパイラは効果的な最適化(レジスタ化)をおこない、良いコードを生成します(ただし、<code>gccgo</code>のほうがより良い場合もあります)。
+</dd>
+<dt>
+	<code>386</code> (別名: <code>x86</code>もしくは<code>x86-32</code>); <code>8g,8l,8c,8a</code>
+</dt>
+<dd>
+	<code>amd64</code>ポーティングと同等です。
+</dd>
+<dt>
+	<code>arm</code> (別名: <code>ARM</code>); <code>5g,5l,5c,5a</code>
+</dt>
+<dd>
+	LinuxとFreeBSD、NetBSDバイナリをサポートします。ほかのポーティングと比べ、あまり使用されていません。
+</dd>
+</dl>
+
+<p>
+低レベルのOSインターフェイスコードを除き、ランタイムはすべてのポーティングで同じで、mark-and-sweepガーベッジコレクタや効率的な配列と文字列のスライス、必要に応じて成長および縮小するスタックなど効率的なゴルーチンをサポートしています。
+</p>
+
+<p>
+コンパイラはDragonFly BSDやFreeBSD、Linux、NetBSD、OpenBSD、
+OS X (Darwin)、Plan 9、Solaris、Windowsをターゲットにすることができます。
+サポートされているすべての組み合わせは、下記の<a href="#environment">環境変数</a>に書かれています。
+</p>
+
+</div>
+
+<h2 id="ctools">C言語ツールをインストールする</h2>
+
+<p>
+GoツールチェインはC言語で書かれています。ビルドするには、Cコンパイラがインストールされている必要があります。
+OS固有の手順については、Goコミュニティウィキページの<a href="http://code.google.com/p/go-wiki/wiki/InstallFromSource#Install_C_tools">InstallFromSource</a>を参照してください。
+</p>
+
+<h2 id="mercurial">Mercurialをインストールする</h2>
+
+<p>
+次の手順を実行するためには、Mercurialがインストールされている必要があります。(<code>hg</code>コマンドがあるかどうかを確かめてください。)
+</p>
+
+<p>
+もしMercurialがインストールされていなければ、<a href="http://mercurial.selenic.com/downloads">Mercurial downloads</a>のページにある手順を実行してください。
+</p>
+
+<p>
+Mercurialのバージョンが1.7.x以上であれば、<a href="http://mercurial.selenic.com/wiki/CACertificates">Certification Authorities</a>の設定が必要になります。エラーメッセージは次のようなものです:
+</p>
+
+<pre>
+warning: code.google.com certificate with fingerprint b1:af: ... bc not verified (check hostfingerprints or web.cacerts config setting)
+</pre>
+
+<p>
+MercurialからCAがないことを指摘されている場合は、Mercurialのバージョンを確認(<code>hg --version</code>)し、
+必要に応じて<a href="http://mercurial.selenic.com/wiki/CACertificates#Configuration_of_HTTPS_certificate_authorities">CAを設定</a>してください。
+</p>
+
+
+<h2 id="fetch">リポジトリの取得</h2>
+
+<p>Goは<code>go</code>というディレクトリにインストールされます。
+親となるディレクトリに移動し、<code>go</code>というディレクトリがないことを確認してください。
+そして、リポジトリを取得してください:</p>
+
+<pre>
+$ hg clone -u release https://code.google.com/p/go
+</pre>
+
+<h2 id="head">(任意) defaultブランチに切り替える</h2>
+
+<p>もしGoのソースコードを変更し、<a href="/doc/contribute.html">このプロジェクトへ貢献する</a>なら、リポジトリに移動し、releaseブランチから開発用のdefaultブランチへ切り替えてください。
+そうでなければ、この手順は無視してください。
+</p>
+
+<pre>
+$ hg update default
+</pre>
+
+<h2 id="install">Goをインストールする</h2>
+
+<p>
+Goディストリビューションをビルドするには、次を実行してください。
+</p>
+
+<pre>
+$ cd go/src
+$ ./all.bash
+</pre>
+
+<p>
+(Windowsでビルドするには、<code>all.bat</code>を使用してください。)
+</p>
+
+<p>
+もしすべて上手くいったなら、次のような出力を表示して終了します:
+</p>
+
+<pre>
+ALL TESTS PASSED
+
+---
+Installed Go for linux/amd64 in /home/you/go.
+Installed commands in /home/you/go/bin.
+*** You need to add /home/you/go/bin to your $PATH. ***
+</pre>
+
+<p>
+最後の数行の詳細はOSやアーキテクチャ、インストールに使用したディレクトリによって異なります。
+</p>
+
+<div class="detail">
+<p>
+ビルドを制御する詳細な方法については、<a href="#environment">環境変数</a>の項目を参照してください。
+<code>all.bash</code> (もしくは<code>all.bat</code>)はGoの重要なテストを実行します。これは単にGoをビルドするより時間がかかります。
+テストスイートを実行したくない場合は、<code>make.bash</code> (もしくは<code>make.bat</code>)を代わりに使ってください。
+</p>
+</div>
+
+
+<h2 id="testing">インストールをテストする</h2>
+
+<p>
+Goが正しくインストールされたかどうかは、簡単なプログラムをビルドすることで確かめられます。
+</p>
+
+<p>
+<code>hello.go</code>というファイルを作り、次のプログラムを記述してください:
+</p>
+
+<pre>
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Printf("hello, world\n")
+}
+</pre>
+
+<p>
+そして、<code>go</code>ツールで実行してください:
+</p>
+
+<pre>
+$ go run hello.go
+hello, world
+</pre>
+
+<p>
+"hello, world"というメッセージが表示されていれば、Goは正常にインストールされています。
+</p>
+
+<h2 id="gopath">開発環境をセットアップする</h2>
+
+<p>
+ほとんどは完了しましたが、もう少しセットアップが必要です。
+</p>
+
+<p>
+<a href="/doc/code.html" class="download" id="start">
+<span class="big">Goコードの書き方</span>
+<span class="desc">Goツールのセットアップ方法と使い方を学びましょう</span>
+</a>
+</p>
+
+<p>
+<a href="/doc/code.html">Goコードの書き方</a>のドキュメントは、Goツールを使うための<b>必須のセットアップ手順</b>を紹介しています。
+</p>
+
+
+<h2 id="tools">追加のツールをインストールする</h2>
+
+<p>
+いくつかのGoツールのソースコード(<a href="/cmd/godoc/">godoc</a>を含む)は<a href="https://code.google.com/p/go.tools">go.toolsリポジトリ</a>にあります。
+これらをすべてインストールするには、<code>go</code> <code>get</code>コマンドを実行してください:
+</p>
+
+<pre>
+$ go get code.google.com/p/go.tools/cmd/...
+</pre>
+
+<p>
+もしくは、特定のコマンド(この場合は<code>godoc</code>)だけインストールしたい場合:
+</p>
+
+<pre>
+$ go get code.google.com/p/go.tools/cmd/godoc
+</pre>
+
+<p>
+これらのツールをインストールするには、<code>go</code> <code>get</code>コマンドは<a href="#mercurial">Mercurial</a>がその環境でインストールされていることを必要とします。
+</p>
+
+<p>
+ワークスペース(<code>GOPATH</code>)をセットアップする必要もあります。
+詳細は、<a href="/doc/code.html">Goコードの書き方</a>をみてください。
+</p>
+
+<p>
+<b>注記</b>: <code>go</code>コマンドは<code>godoc</code>バイナリを<code>$GOROOT/bin</code> (もしくは<code>$GOBIN</code>)に、
+<code>cover</code>と<code>vet</code>バイナリを
+<code>$GOROOT/pkg/tool/$GOOS_$GOARCH</code>にインストールします。
+後半のコマンドは、
+"<code>go</code> <code>tool</code> <code>cover</code>"と、
+"<code>go</code> <code>tool</code> <code>vet</code>"で実行できます。
+</p>
+
+<h2 id="community">コミュニティの情報</h2>
+
+<p>
+一般的なコミュニティとして、
+<code>#go-nuts</code>が<a href="http://freenode.net/">Freenode</a> IRCサーバーにあり、
+<a href="http://groups.google.com/group/golang-nuts">Go Nuts</a>メーリングリストは
+あなたのインストールや開発作業の問題を手助けしてくれます。
+最新情報についていきたい場合には他のメーリングリストもあります。
+<a href="http://groups.google.com/group/golang-checkins">golang-checkins</a>ではGoのリポジトリが更新されるたびに要約されたメッセージを受け取ることができます。
+</p>
+
+<p>
+バグは、<a href="http://code.google.com/p/go/issues/list">Go issue tracker</a>から報告することが出来ます。
+</p>
+
+
+<h2 id="releases">リリースについていく</h2>
+
+<p>
+Goプロジェクトは安定版のタグをMercurialリポジトリにつけています: <code>release</code>。
+</p>
+
+<p>
+<code>release</code>タグはGoの現在の安定リリースを指しています。
+ほとんどのGoのユーザはこのバージョンを使うべきです。新しいリリースは、
+<a href="http://groups.google.com/group/golang-announce">golang-announce</a>
+メーリングリストでアナウンスされます。
+</p>
+
+<p>
+現在のソースツリーを最新リリースに更新するには、次を実行してください:
+</p>
+
+<pre>
+$ cd go/src
+$ hg pull
+$ hg update release
+$ ./all.bash
+</pre>
+
+
+<h2 id="environment">環境変数</h2>
+
+<p>
+Goのコンパイル環境は環境変数でカスタマイズすることができます。
+<i>ビルドに必須のものはありません</i>が、初期値を上書きすることもできます。
+</p>
+
+<ul>
+<li><code>$GOROOT</code>
+<p>
+Goソースコードツリーのおおもとで、だいたい<code>$HOME/go</code>になります。
+この値はコンパイル時に決定され、<code>all.bash</code>が実行された場所の親ディレクトリが初期値です。
+同じリポジトリの複数のコピーを切り替えたい場合を除いては、設定する必要はありません。
+</p>
+
+<li><code>$GOROOT_FINAL</code>
+<p>
+この値は<code>$GOROOT</code>が明示的に設定されなかった場合に、インストールされたバイナリとスクリプトから推定されます。
+初期値は<code>$GOROOT</code>の値です。
+もしどこかでGoをビルドして他の場所に移したい場合は、最終的な場所を<code>$GOROOT_FINAL</code>に設定してください。
+</p>
+
+<li><code>$GOOS</code>と<code>$GOARCH</code>
+<p>
+ターゲットのOSとアーキテクチャの名前です。
+初期値は<code>$GOHOSTOS</code>と<code>$GOHOSTARCH</code>と同じです。
+
+<p>
+<code>$GOOS</code>は、
+<code>darwin</code> (Mac OS X 10.6以上)、 <code>dragonfly</code>、 <code>freebsd</code>、
+<code>linux</code>、 <code>netbsd</code>、 <code>openbsd</code>、
+<code>plan9</code>、 <code>solaris</code>または<code>windows</code>のどれかです。
+<code>$GOARCH</code>は、
+<code>amd64</code> (64ビット x86, もっとも成熟している)、
+<code>386</code> (32ビット x86)または<code>arm</code> (32ビット ARM)のどれかです。
+<code>$GOOS</code>と<code>$GOARCH</code>の有効な組み合わせは:
+<table cellpadding="0">
+<tr>
+<th width="50"></th><th align="left" width="100"><code>$GOOS</code></th> <th align="left" width="100"><code>$GOARCH</code></th>
+</tr>
+<tr>
+<td></td><td><code>darwin</code></td> <td><code>386</code></td>
+</tr>
+<tr>
+<td></td><td><code>darwin</code></td> <td><code>amd64</code></td>
+</tr>
+<tr>
+<td></td><td><code>dragonfly</code></td> <td><code>386</code></td>
+</tr>
+<tr>
+<td></td><td><code>dragonfly</code></td> <td><code>amd64</code></td>
+</tr>
+<tr>
+<td></td><td><code>freebsd</code></td> <td><code>386</code></td>
+</tr>
+<tr>
+<td></td><td><code>freebsd</code></td> <td><code>amd64</code></td>
+</tr>
+<tr>
+<td></td><td><code>freebsd</code></td> <td><code>arm</code></td>
+</tr>
+<tr>
+<td></td><td><code>linux</code></td> <td><code>386</code></td>
+</tr>
+<tr>
+<td></td><td><code>linux</code></td> <td><code>amd64</code></td>
+</tr>
+<tr>
+<td></td><td><code>linux</code></td> <td><code>arm</code></td>
+</tr>
+<tr>
+<td></td><td><code>netbsd</code></td> <td><code>386</code></td>
+</tr>
+<tr>
+<td></td><td><code>netbsd</code></td> <td><code>amd64</code></td>
+</tr>
+<tr>
+<td></td><td><code>netbsd</code></td> <td><code>arm</code></td>
+</tr>
+<tr>
+<td></td><td><code>openbsd</code></td> <td><code>386</code></td>
+</tr>
+<tr>
+<td></td><td><code>openbsd</code></td> <td><code>amd64</code></td>
+</tr>
+<tr>
+<td></td><td><code>plan9</code></td> <td><code>386</code></td>
+</tr>
+<tr>
+<td></td><td><code>plan9</code></td> <td><code>amd64</code></td>
+</tr>
+<tr>
+<td></td><td><code>solaris</code></td> <td><code>amd64</code></td>
+</tr>
+<tr>
+<td></td><td><code>windows</code></td> <td><code>386</code></td>
+</tr>
+<tr>
+<td></td><td><code>windows</code></td> <td><code>amd64</code></td>
+</tr>
+</table>
+
+<li><code>$GOHOSTOS</code> and <code>$GOHOSTARCH</code>
+<p>
+ホストOSとアーキテクチャの名前です。
+初期値はローカルのシステムのOSとアーキテクチャになります。
+</p>
+
+<p>
+<code>$GOOS</code>と<code>$GOARCH</code>の有効な組み合わせは上記と同じです。
+指定する値は、ローカルのシステムと互換性のあるものでなければなりません。
+例えば、x86システムで<code>$GOHOSTARCH</code>を<code>arm</code>に設定することは出来ません。
+</p>
+
+<li><code>$GOBIN</code>
+<p>
+Goバイナリがインストールされる場所です。
+初期値は<code>$GOROOT/bin</code>です。
+インストール後は、このディレクトリを<code>$PATH</code>に追加することで、ツールが使えるように成ります。
+もし<code>$GOBIN</code>が設定されていれば、<a href="/cmd/go">goコマンド</a>はすべてのコマンドをそこにインストールします。
+</p>
+
+<li><code>$GO386</code> (<code>386</code>のみ、初期値はネイティブビルドでは自動判別それ以外では<code>387</code>)
+<p>
+これは8gが浮動小数点演算をするコードを生成する際に、387浮動小数点ユニットを使う(<code>387</code>を設定する)か、SSE2命令を使う(<code>sse2</code>を設定する)かを設定します。
+</p>
+<ul>
+	<li><code>GO386=387</code>: 浮動小数点演算にx87を使う; すべてのx86チップをサポートする(Pentium MMX以降).
+	<li><code>GO386=sse2</code>: 浮動小数点演算にSSE2を使う; 387よりパフォーマンスはよいが、Pentium 4/Opteron/Athlon 64以降でのみ使用可能。
+</ul>
+
+<li><code>$GOARM</code> (<code>arm</code>のみ、初期値はターゲット上でビルドしている場合は自動判別、そうでなければ6)
+<p>
+ランタイムがターゲットにすべきARM浮動小数点コプロセッサアーキテクチャのバージョンを設定します。
+ターゲットシステム上でコンパイルしている場合は自動判別です。
+</p>
+<ul>
+	<li><code>GOARM=5</code>: ソフトウェア浮動小数点を使います; CPUはVFPコプロセッサを持ちません
+	<li><code>GOARM=6</code>: VFPv1のみを使います; クロスコンパイル時のデフォルトです; ARM11以上向けです (だいたいはVFPv2以上がサポートされています)
+	<li><code>GOARM=7</code>: VFPv3を使います; Cortex-Aコアで利用できます
+</ul>
+<p>
+もし自信がなければ、この値は設定せず、Goの実行ファイルを実行するときに必要に応じて調整してください。
+<a href="http://code.google.com/p/go-wiki/w/list">Goコミュニティウィキ</a>の<a href="http://code.google.com/p/go-wiki/wiki/GoArm">GoARM</a>のページに、GoのARMサポートに関する追加の情報があります。
+</p>
+
+</ul>
+
+<p>
+<code>$GOARCH</code>と<code>$GOOS</code>は
+<em>ターゲット</em>環境を識別します、実行している環境ではありません。
+実際、常にクロスコンパイルします。
+アーキテクチャによって、ターゲット環境が実行できるバイナリの種類を示します:
+x86-64システムで32ビットのOS動かしている場合は、<code>GOARCH</code>を<code>386</code>に設定する必要があります。
+<code>amd64</code>ではありません。
+</p>
+
+<p>
+もしこれらの初期値を上書きしたい場合には、シェルのプロファイル(<code>$HOME/.bashrc</code>や
+<code>$HOME/.profile</code>など)で設定してください。
+例えば次のようになります:
+</p>
+
+<pre>
+export GOROOT=$HOME/go
+export GOARCH=amd64
+export GOOS=linux
+</pre>
+
+<p>
+繰り返しになりますが、ビルドやインストール、開発時にこれらの設定値が必要になることはありません。
+</p>
