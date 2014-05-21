@@ -222,8 +222,8 @@ Goのオブジェクトファイルとバイナリでは、シンボルの厳密
 <code>fmt.Printf</code>や<code>math/rand.Int</code>など。
 アセンブラのパーサーはピリオドやスラッシュを区切り文字として扱うので、これらの文字列を識別名として使うことはできません。
 かわりに、アセンブラは識別子中の中黒文字(MIDDLE DOT: U+00B7)と割り算文字(DIVISION SLASH: U+2215)を普通のピリオドとスラッシュに置換します。
-など。センブラのソースファイルでは、上記シンボルは次のように書く必要があります: <code>fmt·Printf</code>や<code>math∕rand·Int</code>.
-コンパイラに<code>-S</code>フラグを与えたときに生成されるアセンブリコードはピリオドとスラッシュがそのまま出力されており、アセンブラから必要とされるUnicode文字への置き換えはされていません。
+アセンブラのソースファイルでは、上記シンボルは次のように書く必要があります: <code>fmt·Printf</code>や<code>math∕rand·Int</code>。
+コンパイラに<code>-S</code>フラグを与えたときに生成されるアセンブリコードは、ピリオドとスラッシュがそのまま出力されており、アセンブラから必要とされるUnicode文字への置き換えはされていません。
 <!--
 In Go object files and binaries, the full name of a symbol is the 
 package path followed by a period and the symbol name:
@@ -264,7 +264,7 @@ own source code, making it easier to move the code from one location to another.
 
 <p>
 アセンブラは、テキストやデータをシンボルと結びつけるために、いくつかのディレクティブを使うことができます。
-例えば、次の簡単な関数のでは、 <code>TEXT</code>ディレクティブはシンボル <code>runtime·profileloop</code>を宣言し、その関数の中身の命令がそのあとに続きます。
+例えば、次の簡単な関数では、 <code>TEXT</code>ディレクティブはシンボル <code>runtime·profileloop</code>を宣言し、その関数の中身の命令がそのあとに続きます。
 <code>TEXT</code>ブロックの最後の命令は何らかのジャンプ命令でなければなりません。通常は、<code>RET</code>(擬似)命令です。
 (もしなければ、リンカが自分自身へジャンプする命令を挿入します。<code>TEXT</code>にfallthroughはありません。)
 さきほどのシンボルのあとには、引数としてフラグとフレームサイズの定数が入ります:
@@ -510,13 +510,13 @@ Here follows some descriptions of key Go-specific details for the supported arch
 -->
 </p>
 
-<h3 id="x86">32ビットIntel 386</h3>
+<h3 id="x86">32ビット Intel 386</h3>
 <!--
 <h3 id="x86">32-bit Intel 386</h3>
 -->
 
 <p>
-<code>m</code>および<code>g</code>構造体へのランタイムポインタは、MMUの未使用(Goが関与する範囲においては)レジスタの値として管理されています。
+<code>m</code>および<code>g</code>構造体へのランタイムポインタは、MMUの(Goが関与する範囲においては)未使用レジスタの値として管理されています。
 アセンブラのためのOS依存マクロ<code>get_tls</code>はアーキテクチャ依存ヘッダファイルを次のようにインクルードしている場合に定義されます:
 <!--
 The runtime pointers to the <code>m</code> and <code>g</code> structures are maintained
