@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=424a1b724d0f651f32c31fe68b71be7ca0eb5c56
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=de3ae795999b4b63a1eb2dac1f7049753b726d8e
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -15,7 +15,7 @@ Go1.3のリリースは、Go1.2をリリースしてから6ヶ月後を予定し
 そして、いかなる言語仕様の変更もありません。
 Go1.3では、ガーベッジコレクションやコンパイラツールチェーンの改善に集中しています。
 特に大規模なプロジェクトにおいて、ビルドが高速になるでしょう。
-他にも全体的にパフォーマンスの大幅な改善やサポート環境の追加(Solaris, Plan9)、
+他にも全体的にパフォーマンスの大幅な改善やサポート環境の追加(DragonFly BSD, Solaris, Plan9)、
 GoogleのNative Client architecture(NaCl)のサポートが含まれます。
 また同期に関連したメモリモデルの改良もありますが、これも重要です。
 当然、<a href="/doc/go1compat.html">後方互換性</a>は保っています。
@@ -24,6 +24,78 @@ Go1.3に移行しても、大抵は変更なしでも問題ないはずです。
 
 <h2 id="os">サポート対象OSに関する変更点</h2>
 
+<!--
+<h3 id="win2000">Removal of support for Windows 2000</h3>
+
+<p>
+Microsoft stopped supporting Windows 2000 in 2010.
+Since it has <a href="https://codereview.appspot.com/74790043">implementation difficulties</a>
+regarding exception handling (signals in Unix terminology),
+as of Go 1.3 it is not supported by Go either.
+</p>
+-->
+<h3 id="win2000">Windows 2000のサポート終了</h3>
+
+<p>
+マイクロソフトは2010年にWindows 2000をサポートを終了しました。
+<a href="https://codereview.appspot.com/74790043">例外機構(Unixにおけるシグナル)の実装が難しい</a>ため、
+Go1.3でも同様にサポートを終了します。
+</p>
+
+<h3 id="dragonfly">Support for DragonFly BSD</h3>
+
+<p>
+Go 1.3 now includes experimental support for DragonFly BSD on the <code>amd64</code> (64-bit x86) and <code>386</code> (32-bit x86) architectures. It uses DragonFly BSD 3.6 or above.
+</p>
+
+<!--
+<h3 id="freebsd">Support for FreeBSD</h3>
+
+<p>
+It was not announced at the time, but since the release of Go 1.2, support for Go on FreeBSD
+requires FreeBSD 8 or above.
+</p>
+
+<p>
+As of Go 1.3, support for Go on FreeBSD requires that the kernel be compiled with the
+<code>COMPAT_FREEBSD32</code> flag configured.
+</p>
+
+<p>
+In concert with the switch to EABI syscalls for ARM platforms, Go 1.3 will run only on
+FreeBSD 10. The x86 platforms, 386 and amd64, are unaffected.
+</p>
+-->
+<h3 id="freebsd">Free BSDのサポート</h3>
+
+<p>
+これまで公式にアナウンスしていませんでしたが、Go1.2からFreeBSD 8以上のFreeBSDをサポートします。
+</p>
+
+<p>
+Go1.3をFreeBSDで使用するためには、kernelに<code>COMPAT_FREEBSD32</code> flagを
+設定してコンパイルしなければいけません。
+</p>
+
+<p>
+ARMプラットフォーム用EABIのシステムコールへの切り替えと協調して、
+Go1.3はFreeBSD 10のみで実行されます。
+x86プラットフォーム、386およびamd64は、影響を受けません。
+</p>
+
+<!--
+<h3 id="nacl">Support for Native Client</h3>
+
+<p>
+Support for the Native Client virtual machine architecture has returned to Go with the 1.3 release.
+It runs on the 32-bit Intel architectures (<code>GOARCH=386</code>) and also on 64-bit Intel, but using
+32-bit pointers (<code>GOARCH=amd64p32</code>).
+There is not yet support for Native Client on ARM.
+Note that this is Native Client (NaCl), not Portable Native Client (PNaCl).
+Details about Native Client are <a href="https://developers.google.com/native-client/dev/">here</a>;
+how to set up the Go version is described <a href="http://golang.org/wiki/NativeClient">here</a>.
+</p>
+-->
 <h3 id="nacl">Native Clientのサポート</h3>
 
 <p>
@@ -35,46 +107,60 @@ Navite Clinetについての詳細は<a href="https://developers.google.com/nati
 またGoのバージョンを指定する方法については<a href="http://golang.org/wiki/NativeClient">ここ</a>に記載があります。
 </p>
 
-<h3 id="solaris">Solarisのサポート</h3>
+<!--
+<h3 id="netbsd">Support for NetBSD</h3>
 
 <p>
-Go1.3では、amd64アーキテクチャ上で動作するSolarisをサポートしています。ただし今のところ、これはExperimentalです。
+As of Go 1.3, support for Go on NetBSD requires NetBSD 6.0 or above.
+</p>
+-->
+<h3 id="netbsd">NetBSDのサポート</h3>
+
+<p>
+Go1.3では、NetBSD 6.0以上でNetBSDをサポートします。
 </p>
 
+<!--
+<h3 id="openbsd">Support for OpenBSD</h3>
+
+<p>
+As of Go 1.3, support for Go on OpenBSD requires OpenBSD 5.5 or above.
+</p>
+-->
+<h3 id="openbsd">OpenBSDのサポート</h3>
+
+<p>
+Go1.3では、OpenBSD 5.5以上でOpenBSDをサポートします。
+</p>
+
+<!--
+<h3 id="plan9">Support for Plan 9</h3>
+
+<p>
+Go 1.3 now includes experimental support for Plan 9 on the <code>386</code> (32-bit x86) architecture.
+It requires the <code>Tsemacquire</code> syscall, which has been in Plan 9 since June, 2012.
+</p>
+-->
 <h3 id="plan9">Plan 9のサポート</h3>
 
 <p>
-Go1.3では、386アーキテクチャ上で動作するPlan9をサポートしています。ただし今のところ、これはExperimentalです。
+Go1.3では、試験的に<code>386</code> (32-bit x86) アーキテクチャ上で動作するPlan9をサポートします。
+2012-06以降のPlan 9の<code>Tsemacquire</code> syscall が必要です。
 </p>
 
-<h3 id="win2000">Windows 2000のサポート終了</h3>
-
-<p>
-マイクロソフトは2010年にWindows 2000をサポートを終了しました。
-<a href="https://codereview.appspot.com/74790043">例外機構(Unixにおけるシグナル)の実装が難しい</a>ため、
-Go1.3でも同様にサポートを終了します。
-</p>
-
-
-<h3 id="freebsd">Free BSDのサポート</h3>
-
-<p>
-公式にアナウンスしていませんでしたが、Go1.2からFreeBSD(8以上)をサポートしています。
-</p>
-
-<p>
-Go1.3をFreeBSDで使用するためには、kernelに<code>COMPAT_FREEBSD32</code> flagを
-設定してコンパイルしなければいけません。
-</p>
-
-<p>
 <!--
-In concert with the switch to EABI syscalls for ARM platforms, Go 1.3 will run only on
-FreeBSD 10. The x86 platforms, 386 and amd64, are unaffected.
+<h3 id="solaris">Support for Solaris</h3>
+
+<p>
+Go 1.3 now includes experimental support for Solaris on the <code>amd64</code> (64-bit x86) architecture.
+It requires illumos, Solaris 11 or above.
+</p>
 -->
-ARMプラットフォーム用EABIのシステムコールへの切り替えと協調して、
-Go1.3はFreeBSD 10のみで実行されます。
-x86プラットフォーム、386およびamd64は、影響を受けません。
+<h3 id="solaris">Solarisのサポート</h3>
+
+<p>
+Go1.3では、試験的に<code>amd64</code> (64-bit x86) アーキテクチャ上で動作するSolarisをサポートします。
+illumos、Solaris 11以上が必要です。
 </p>
 
 <h2 id="memory">メモリモデルの変更点</h2>
