@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=e2509b1f3a91cc5e72a6ed3918e341cc3cb7b7b8
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=424a1b724d0f651f32c31fe68b71be7ca0eb5c56
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -142,6 +142,44 @@ Such code can be identified by <code>go vet</code>.
 <em>更新</em>: 
 ポインタにメモリへ保持する整数型の値を変換するために、 <code>unsafe.Pointer</code> を使用するコードは不正であり、書き直す必要があります。
 このようなコードは <code>go vet</code> で識別することができます。
+</p>
+
+<h3 id="map">Map iteration</h3>
+
+<p>
+<!--
+Iterations over small maps no longer happen in a consistent order.
+Go 1 defines that &ldquo;<a href="http://golang.org/ref/spec#For_statements">The iteration order over maps
+is not specified and is not guaranteed to be the same from one iteration to the next.</a>&rdquo;
+To keep code from depending on map iteration order,
+Go 1.0 started each map iteration at a random index in the map.
+A new map implementation introduced in Go 1.1 neglected to randomize
+iteration for maps with eight or fewer entries, although the iteration order
+can still vary from system to system.
+This has allowed people to write Go 1.1 and Go 1.2 programs that
+depend on small map iteration order and therefore only work reliably on certain systems.
+Go 1.3 reintroduces random iteration for small maps in order to flush out these bugs.
+-->
+小規模なmapのイテレーションは、もう一貫した順序では動きません。
+Go1では
+&ldquo;<a href="http://golang.org/ref/spec#For_statements">map上のイテレーション順序は指定されず、次のイテレーションで同じになることは保証されない</a>&rdquo;
+と定義されています。
+mapのイテレーション順序の依存からコードを守るために、Go1.0以降はmapのランダムなインデックスでmapのイテレーションをします。
+イテレーションの順序はシステムによって異なりますが、Go1.1で導入された新しいmapの実装では、8個以下のエントリを持つmapではランダム化しません。
+小さなmapのイテレーション順序に依存し、それゆえに特定のシステムだけで動作するプログラムをGo1.1とGo1.2で書くことが出来ました。
+Go1.3では、これらのバグを洗い出すために、mapのランダムなイテレーションを受け入れてください。
+</p>
+
+<p>
+<!--
+<em>Updating</em>: If code assumes a fixed iteration order for small maps,
+it will break and must be rewritten not to make that assumption.
+Because only small maps are affected, the problem arises most often in tests.
+-->
+<em>更新</em>:
+コードが小さなmapでイテレーション順序が固定されることを仮定している場合、
+そのような仮定をしないように書き直す必要があります。
+小さなmapだけが影響を受けるため、この問題はテストで多く発生します。
 </p>
 
 <h3 id="liblink">リンカ</h3>
