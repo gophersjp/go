@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=88a007e7e8412ecde99fcdfc847f4d3051019fe6
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=1cce51e9072645f062fea359e0e5a6ca33a51efb
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -328,6 +328,31 @@ all.bashを実行する際、それぞれCとC++のコード用のクロスコ�
 <p>
 最後に、goコマンドは、cgoを通じてObjective-Cファイル(ファイル拡張子が<code>.m</code>)をインポートする
 パッケージをサポートしています。
+</p>
+
+<h3 id="cgo">Changes to cgo</h3>
+
+<p>
+The <a href="/cmd/cgo/"><code>cmd/cgo</code></a> command,
+which processes <code>import "C"</code> declarations in Go packages,
+has corrected a serious bug that may cause some packages to stop compiling.
+Previously, all pointers to incomplete struct types translated to the Go type <code>*[0]byte</code>,
+with the effect that the Go compiler could not diagnose passing one kind of struct pointer
+to a function expecting another.
+Go 1.3 corrects this mistake by translating each different
+incomplete struct to a different named type.
+However, some Go code took advantage of this bug to pass (for example) a <code>*C.FILE</code>
+from one package to another.
+This is not legal and no longer works: in general Go packages
+should avoid exposing C types and names in their APIs.
+</p>
+
+<p>
+<em>Updating</em>: Code confusing pointers to incomplete types or
+passing them across package boundaries will no longer compile
+and must be rewritten.
+If the conversion is correct and must be preserved,
+use an explicit conversion via <a href="/pkg/unsafe/#Pointer"><code>unsafe.Pointer</code></a>.
 </p>
 
 <h3 id="swig">SWIG 3.0 required for programs that use SWIG</h3>
