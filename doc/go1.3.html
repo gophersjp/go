@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=1281c0084acf7c224c6fc1b1741ecb55a3480a54
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=9217ec02c4e1663fad4221f850b11ca35f0ebbfd
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -110,6 +110,38 @@ Go1.2では最小スタックサイズを8kバイトに変更しましたが、�
 これまで、ガーベッジコレクタがヒープ領域の値の評価は<em>正確</em>でした。
 Go1.3では、スタック上の値も同様に正確に評価されます。
 つまり、ポインタでないint型の値がポインタに間違われたり、未使用メモリとして再利用されるようなことはありません。
+</p>
+
+<p>
+<!--
+Starting with Go 1.3, the runtime assumes that values with pointer type
+contain pointers and other values do not.
+This assumption is fundamental to the precise behavior of both stack expansion
+and garbage collection.
+Programs that use <a href="/pkg/unsafe/">package unsafe</a>
+to store integers in pointer-typed values are illegal and will crash if the runtime detects the behavior.
+Programs that use <a href="/pkg/unsafe/">package unsafe</a> to store pointers
+in integer-typed values are also illegal but more difficult to diagnose during execution.
+Because the pointers are hidden from the runtime, a stack expansion or garbage collection
+may reclaim the memory they point at, creating
+<a href="http://en.wikipedia.org/wiki/Dangling_pointer">dangling pointers</a>.
+-->
+Go1.3以降では、ランタイムはポインタ型の値はポインタを含み、他の値ではないと仮定します。
+この仮定は、スタックの拡大とガーベッジコレクションの両方の正確な振る舞いの基本です。
+ポインタ型の値に整数を格納するために、 <a href="/pkg/unsafe/">package unsafe</a> を使用するプログラムは不正であり、ランタイムがこの振る舞いを検出した場合にはクラッシュします。
+整数型の値にポインタを格納するために、 <a href="/pkg/unsafe/">package unsafe</a> を使用するプログラムもまた不正ですが、実行時に検出することは困難です。
+ポインタはランタイムから隠されているため、スタックの拡大や、ガーベッジコレクションは、ダングリングポインタ(dangling pointer)を作成し、これらが指すメモリを再利用することができます。
+</p>
+
+<p>
+<!--
+<em>Updating</em>: Code that uses <code>unsafe.Pointer</code> to convert
+an integer-typed value held in memory into a pointer is illegal and must be rewritten.
+Such code can be identified by <code>go vet</code>.
+-->
+<em>更新</em>: 
+ポインタにメモリへ保持する整数型の値を変換するために、 <code>unsafe.Pointer</code> を使用するコードは不正であり、書き直す必要があります。
+このようなコードは <code>go vet</code> で識別することができます。
 </p>
 
 <h3 id="liblink">リンカ</h3>
