@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=9217ec02c4e1663fad4221f850b11ca35f0ebbfd
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=e2509b1f3a91cc5e72a6ed3918e341cc3cb7b7b8
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -423,6 +423,22 @@ HTTPのkeep-alivesを無効にできます。
 <a href="/pkg/strconv/"><code>strconv</code></a>パッケージの
 <a href="/pkg/strconv/#CanBackquote"><code>CanBackquote</code></a>関数は、
 DEL文字(U+007 F)は非印刷と見なします。
+</li>
+
+<li>
+<!--
+The <a href="/pkg/syscall/"><code>syscall</code></a> package now provides
+<a href="/pkg/syscall/#SendmsgN"><code>SendmsgN</code></a>
+as an alternate version of
+<a href="/pkg/syscall/#Sendmsg"><code>Sendmsg</code></a>
+that returns the number of bytes written.
+-->
+<a href="/pkg/syscall/"><code>syscall</code></a> パッケージは、
+書き込まれたバイト数を返す
+<a href="/pkg/syscall/#Sendmsg"><code>Sendmsg</code></a>
+の代わりのバージョンとして
+<a href="/pkg/syscall/#SendmsgN"><code>SendmsgN</code></a>
+を提供します。
 </li>
 
 <li>
