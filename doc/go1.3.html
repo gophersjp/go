@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=8979b6d0163fcc033638d966d440f95c0d2bf512
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=07c77d12874022dac37ac78be3c330d3927ee008
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -312,6 +312,17 @@ of the specified target, but not the target itself.
 -->
 <a href="/cmd/go/"><code>go build</code></a>サブコマンドは、
 ターゲット自体ではなく、指定したターゲットの依存をインストールするために新しい<code>-i</code>オプションをサポートします。
+</p>
+
+<p>
+<!--
+Cross compiling with <a href="/cmd/cgo/"><code>cgo</code></a> enabled
+is now supported. The CC_FOR_TARGET and CXX_FOR_TARGET environment
+variables are used when running all.bash to specify the cross compilers
+for C and C++ code, respectively.
+-->
+<a href="/cmd/cgo/"><code>cgo</code></a>でクロスコンパイルがサポートされるようになりました。
+all.bashを実行する際、それぞれCとC++のコード用のクロスコンパイラを指定するために CC_FOR_TARGET と CXX_FOR_TARGET の環境変数が使われます。
 </p>
 
 <p>
