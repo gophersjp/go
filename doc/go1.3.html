@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=de3ae795999b4b63a1eb2dac1f7049753b726d8e
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=8979b6d0163fcc033638d966d440f95c0d2bf512
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -182,12 +182,6 @@ Go1.3では、ゴルーチンのスタック実装が以前のセグメント方
 セグメント境界を跨いで計算を繰り返すようなケースでは、転送操作のオーバーヘッドは無視できるし、
 さらに”ホットスポット”問題も解消できます。
 パフォーマンスの詳細は、<a href="http://golang.org/s/contigstacks">design document</a>を見て下さい。
-</p>
-
-<h3 id="stack_size">スタックサイズ</h3>
-
-<p>
-Go1.2では最小スタックサイズを8kバイトに変更しましたが、新しいスタックモデルでは4kバイトに戻しました。
 </p>
 
 <h3 id="garbage_collector">ガーベッジコレクタの変更点</h3>
