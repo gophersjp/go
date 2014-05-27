@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=7f529f73708ab23af29f7a807af80beea97292c1
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=7dc82eaef884f5a809bada4bc0daa7ff2911a3e9
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -152,6 +152,16 @@ GCC4.9では、Go1.2(1.3ではなく)をサポートする予定です。GCCとG
 <a href="/cmd/go/"><code>go test</code></a>サブコマンドは、
 テストファイルがない場合でもパッケージを全てビルドするようになりました。
 以前は、テストファイルがない場合は何もしませんでした。
+</p>
+
+<p>
+<!--
+The <a href="/cmd/go/"><code>go build</code></a> subcommand
+supports a new <code>-i</code> option to install dependencies
+of the specified target, but not the target itself.
+-->
+<a href="/cmd/go/"><code>go build</code></a>サブコマンドは、
+ターゲット自体ではなく、指定したターゲットの依存をインストールするために新しい<code>-i</code>オプションをサポートします。
 </p>
 
 <p>
