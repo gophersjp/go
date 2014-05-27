@@ -1,7 +1,7 @@
 # golang [![Build Status](https://travis-ci.org/gophersjp/go.png)](https://travis-ci.org/gophersjp/go)
 
 日本語ドキュメントはこちら:
-* http://godocjp.herokuapp.com/ （試験運用中）
+* http://golang-jp.org/ （試験運用中）
 * http://godoc.org/github.com/gophersjp/go （doc.goのみ）
 
 方針(2014/04現在):
