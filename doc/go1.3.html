@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=ad0ee22273968c5f7fd380f05a753cdd4e1ac2d1
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=1281c0084acf7c224c6fc1b1741ecb55a3480a54
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -394,6 +394,10 @@ cdecl呼び出し規約をサポートしています。
 <li>
 <a href="/pkg/testing/"><code>testing</code></a>パッケージは、<code>panic(nil)</code>の呼び出しを診断します。
 というのもそれはほとんどの場合、エラーであると考えられるからです。
+<!--
+Also, tests now write profiles (if invoked with profiling flags) even on failure.
+-->
+また、今はテストが失敗したとしてもプロファイルを作成（profilingフラグで起動した場合）します。
 </li>
 
 <li>
