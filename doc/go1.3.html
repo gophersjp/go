@@ -563,6 +563,12 @@ HTTPのkeep-alivesを無効にできます。
 </li>
 
 <li>
+The <a href="/pkg/reflect/#Value.SetMapIndex"><code>SetMapIndex</code></a>
+function in the <a href="/pkg/reflect/"><code>reflect</code></a> package
+no longer panics when deleting from a <code>nil</code> map.
+</li>
+
+<li>
 メインのゴルーチンが<a href="/pkg/runtime/#Goexit"><code>runtime.Goexit</code></a>を呼び出して他のすべてのゴルーチンの実行が終了した場合、
 プログラムは常にクラッシュし、デッドロックを報告します。
 このようなケースで、以前のバージョンは一貫性がありませんでした。
