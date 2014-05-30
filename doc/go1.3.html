@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=1cce51e9072645f062fea359e0e5a6ca33a51efb
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=900650e66b4f3431cdef2271ce00813813c466bf
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -341,7 +341,13 @@ with the effect that the Go compiler could not diagnose passing one kind of stru
 to a function expecting another.
 Go 1.3 corrects this mistake by translating each different
 incomplete struct to a different named type.
-However, some Go code took advantage of this bug to pass (for example) a <code>*C.FILE</code>
+</p>
+
+<p>
+Given the C declaration <code>typedef struct S T</code> for an incomplete <code>struct S</code>,
+some Go code used this bug to refer to the types <code>C.struct_S</code> and <code>C.T</code> interchangeably.
+Cgo now explicitly allows this use, even for completed struct types.
+However, some Go code also used this bug to pass (for example) a <code>*C.FILE</code>
 from one package to another.
 This is not legal and no longer works: in general Go packages
 should avoid exposing C types and names in their APIs.
@@ -490,6 +496,22 @@ PKCS#10証明書署名要求の解析をサポートします。
 <li>
 <code>fmt</code>パッケージの整形出力関数で、<code>%F</code>を<code>%f</code>の別名として定義します。
 これは浮動小数点を出力するときに使用できます。
+</li>
+
+<li>
+The <a href="/pkg/math/big/"><code>math/big</code></a> package's
+<a href="/pkg/math/big/#Int"><code>Int</code></a> and
+<a href="/pkg/math/big/#Rat"><code>Rat</code></a> types
+now implement
+<a href="/pkg/encoding/#TextMarshaler"><code>encoding.TextMarshaler</code></a> and
+<a href="/pkg/encoding/#TextUnmarshaler"><code>encoding.TextUnmarshaler</code></a>.
+</li>
+
+<li>
+The complex power function, <a href="/pkg/math/cmplx/#Pow"><code>Pow</code></a>,
+now specifies the behavior when the first argument is zero.
+It was undefined before.
+The details are in the <a href="/pkg/math/cmplx/#Pow">documentation for the function</a>.
 </li>
 
 <li>
