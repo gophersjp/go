@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=1cce51e9072645f062fea359e0e5a6ca33a51efb
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=900650e66b4f3431cdef2271ce00813813c466bf
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -42,10 +42,18 @@ as of Go 1.3 it is not supported by Go either.
 Go1.3でも同様にサポートを終了します。
 </p>
 
+<!--
 <h3 id="dragonfly">Support for DragonFly BSD</h3>
 
 <p>
-Go 1.3 now includes experimental support for DragonFly BSD on the <code>amd64</code> (64-bit x86) and <code>386</code> (32-bit x86) architectures. It uses DragonFly BSD 3.6 or above.
+Go 1.3 now includes experimental support for DragonFly BSD on the <code>amd64</code> (64-bit x86) and <code>386</code> (32-bit x86) architectures.
+It uses DragonFly BSD 3.6 or above.
+</p>
+-->
+<h3 id="dragonfly">DragonFly BSDのサポート</h3>
+
+<p>
+Go1.3では、試験的に<code>amd64</code> (64-bit x86)と<code>386</code> (32-bit x86) アーキテクチャ上で動作するDragonFly BSDをサポートします。DragonFly BSD 3.6以上が必要です。
 </p>
 
 <!--
@@ -245,9 +253,9 @@ Go1では
 &ldquo;<a href="http://golang.org/ref/spec#For_statements">map上のイテレーション順序は指定されず、次のイテレーションで同じになることは保証されない</a>&rdquo;
 と定義されています。
 mapのイテレーション順序の依存からコードを守るために、Go1.0以降はmapのランダムなインデックスでmapのイテレーションをします。
-イテレーションの順序はシステムによって異なりますが、Go1.1で導入された新しいmapの実装では、8個以下のエントリを持つmapではランダム化しません。
-小さなmapのイテレーション順序に依存し、それゆえに特定のシステムだけで動作するプログラムをGo1.1とGo1.2で書くことが出来ました。
-Go1.3では、これらのバグを洗い出すために、mapのランダムなイテレーションを受け入れてください。
+イテレーションの順序はシステムによって異なりますが、Go1.1で導入された新しいmapの実装では、8個以下のエントリを持つmapのイテレーション順序はランダムではありませんでした。
+そのためGo1.1とGo1.2では、小さいmapのイテレーション順序に依存した、特定のシステムでだけ安定して動作するプログラムを書くことができました。
+Go1.3では、これらのバグを洗い出すために、小さいmapでもイテレーション順序はランダムになりました。
 </p>
 
 <p>
@@ -257,7 +265,7 @@ it will break and must be rewritten not to make that assumption.
 Because only small maps are affected, the problem arises most often in tests.
 -->
 <em>更新</em>:
-コードが小さなmapでイテレーション順序が固定されることを仮定している場合、
+小さなmapでイテレーション順序が固定されていることを仮定しているコードは、
 そのような仮定をしないように書き直す必要があります。
 小さなmapだけが影響を受けるため、この問題はテストで多く発生します。
 </p>
@@ -330,38 +338,33 @@ all.bashを実行する際、それぞれCとC++のコード用のクロスコ�
 パッケージをサポートしています。
 </p>
 
-<h3 id="cgo">Changes to cgo</h3>
+<h3 id="cgo">cgoの変更点</h3>
 
 <p>
-The <a href="/cmd/cgo/"><code>cmd/cgo</code></a> command,
-which processes <code>import "C"</code> declarations in Go packages,
-has corrected a serious bug that may cause some packages to stop compiling.
-Previously, all pointers to incomplete struct types translated to the Go type <code>*[0]byte</code>,
-with the effect that the Go compiler could not diagnose passing one kind of struct pointer
-to a function expecting another.
-Go 1.3 corrects this mistake by translating each different
-incomplete struct to a different named type.
-However, some Go code took advantage of this bug to pass (for example) a <code>*C.FILE</code>
-from one package to another.
-This is not legal and no longer works: in general Go packages
-should avoid exposing C types and names in their APIs.
+Goのパッケージで<code>import "C"</code>宣言を処理する<a href="/cmd/cgo/"><code>cmd/cgo</code></a>コマンドは、
+いくつかのパッケージでコンパイルが停止する深刻なバグが修正されました。
+以前は、不完全な構造体型へのポインタはGoの<code>*[0]byte</code>型に変換され、Goコンパイラは構造体へのポインタを違うものを期待している関数へ渡していることを検出できませんでした。
+Go 1.3ではこの誤りを修正し、不完全な構造体はそれぞれ違う名前の型へ変換されるようになりました。
 </p>
 
 <p>
-<em>Updating</em>: Code confusing pointers to incomplete types or
-passing them across package boundaries will no longer compile
-and must be rewritten.
-If the conversion is correct and must be preserved,
-use an explicit conversion via <a href="/pkg/unsafe/#Pointer"><code>unsafe.Pointer</code></a>.
+Cの宣言として<code>typedef struct S T</code>が不完全な構造体<code>struct S</code>とともに与えられたとき、
+一部のGoのコードはこのバグを、<code>C.struct_S</code>と<code>C.T</code>をお互いに入れ替えるために使っていました。
+Cgoはこのような使い方を、完全な構造体型でも明確に許すようになりました。
+しかし、一部のGoのコードはこのバグを(たとえば)<code>*C.FILE</code>をあるパッケージから別のパッケージへ渡すために使っています。
+これは正しくなく、動作しなくなりました: 一般に、GoのパッケージはCの型と名前をAPI上で公開するべきではありません。
 </p>
 
-<h3 id="swig">SWIG 3.0 required for programs that use SWIG</h3>
+<p>
+<em>更新</em>: 不完全な型へのポインタを混同しているコードや、パッケージ境界を跨いで渡しているコードはコンパイルできなくなりました。書き直す必要があります。
+もしその変換が正しく、かつそのままにしたいのであれば、<a href="/pkg/unsafe/#Pointer"><code>unsafe.Pointer</code></a>を使って明示的に変換してください。
+</p>
+
+<h3 id="swig">SWIGを使用しているプログラムはSWIG 3.0が必要</h3>
 
 <p>
-For Go programs that use SWIG, SWIG version 3.0 is now required.  The
-<a href="/cmd/go"><code>cmd/go</code></a> command will now link the
-SWIG generated object files directly into the binary, rather than
-building and linking with a shared library.
+SWIGを使用しているGoのプログラムは、SWIGバージョン3.0が必要になりました。
+<a href="/cmd/go"><code>cmd/go</code></a>コマンドはSWIGで生成されたオブジェクトファイルを、共有ライブラリをビルドしてリンクするのではなく、バイナリに直接リンクするようなりました。
 </p>
 
 <h3 id="gc_flag">コマンドライン引数の解析</h3>
@@ -402,7 +405,7 @@ Go1.3では、ランタイムやガーベッジコレクション、さらに標
 </li>
 
 <li>
-並行ガーベッジコレクタのアルゴリズムが改善(並列性の向上、ページサイズの増加)されたことで、ガーベッジコレクタが速くなりました。
+ガーベッジコレクタは並列スイープアルゴリズムを使って並列性を向上し、またページサイズを増加したことで速くなりました。
 ガーベッジコレクタの停止時間は、平均して50から70%は減るでしょう。
 </li>
 
@@ -493,6 +496,20 @@ PKCS#10証明書署名要求の解析をサポートします。
 </li>
 
 <li>
+<a href="/pkg/math/big/"><code>math/big</code></a>パッケージの
+<a href="/pkg/math/big/#Int"><code>Int</code></a>と
+<a href="/pkg/math/big/#Rat"><code>Rat</code></a>型で
+<a href="/pkg/encoding/#TextMarshaler"><code>encoding.TextMarshaler</code></a>と
+<a href="/pkg/encoding/#TextUnmarshaler"><code>encoding.TextUnmarshaler</code></a>が実装されました。
+</li>
+
+<li>
+複素べき関数の<a href="/pkg/math/cmplx/#Pow"><code>Pow</code></a>で第一引数がゼロのときの振る舞いが定義されました。
+これまでは未定義でした。
+詳細は<a href="/pkg/math/cmplx/#Pow">関数ドキュメント</a>にあります。
+</li>
+
+<li>
 <a href="/pkg/net/http/"><code>net/http</code></a>パッケージは、クライアント要求を行う際に
 新たに追加された<a href="/pkg/net/http/#Response"><code>Response.TLS</code></a>フィールドで使用するために、
 TLS接続のプロパティを公開します。
@@ -563,9 +580,8 @@ HTTPのkeep-alivesを無効にできます。
 </li>
 
 <li>
-The <a href="/pkg/reflect/#Value.SetMapIndex"><code>SetMapIndex</code></a>
-function in the <a href="/pkg/reflect/"><code>reflect</code></a> package
-no longer panics when deleting from a <code>nil</code> map.
+<a href="/pkg/reflect/"><code>reflect</code></a>パッケージの<a href="/pkg/reflect/#Value.SetMapIndex"><code>SetMapIndex</code></a>関数は、
+<code>nil</code> mapから削除するときでもパニックしなくなりました。
 </li>
 
 <li>
