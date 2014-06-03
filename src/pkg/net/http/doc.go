@@ -3,9 +3,9 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package http provides HTTP client and server implementations.
+httpパッケージはHTTPクライアントとサーバの実装を提供します。
 
-Get, Head, Post, and PostForm make HTTP (or HTTPS) requests:
+Get、Head、Post、PostFormはHTTP(またはHTTPS)リクエストを作成します。
 
 	resp, err := http.Get("http://example.com/")
 	...
@@ -14,7 +14,7 @@ Get, Head, Post, and PostForm make HTTP (or HTTPS) requests:
 	resp, err := http.PostForm("http://example.com/form",
 		url.Values{"key": {"Value"}, "id": {"123"}})
 
-The client must close the response body when finished with it:
+クライアントは終了時にレスポンスボディをクローズしなければなりません。
 
 	resp, err := http.Get("http://example.com/")
 	if err != nil {
@@ -24,8 +24,8 @@ The client must close the response body when finished with it:
 	body, err := ioutil.ReadAll(resp.Body)
 	// ...
 
-For control over HTTP client headers, redirect policy, and other
-settings, create a Client:
+HTTPクライアントヘッダ、リダイレクトポリシーなどの設定を制御するには
+Clientを作成してください。
 
 	client := &http.Client{
 		CheckRedirect: redirectPolicyFunc,
@@ -40,8 +40,8 @@ settings, create a Client:
 	resp, err := client.Do(req)
 	// ...
 
-For control over proxies, TLS configuration, keep-alives,
-compression, and other settings, create a Transport:
+プロキシ、TLS設定、キープアライブ、圧縮などの設定を制御するには
+Transportを作成してください。
 
 	tr := &http.Transport{
 		TLSClientConfig:    &tls.Config{RootCAs: pool},
@@ -50,12 +50,12 @@ compression, and other settings, create a Transport:
 	client := &http.Client{Transport: tr}
 	resp, err := client.Get("https://example.com")
 
-Clients and Transports are safe for concurrent use by multiple
-goroutines and for efficiency should only be created once and re-used.
+ClientとTransportは複数のゴルーチンからの並行アクセスに対して安全であり、
+効率のために一度だけ作成されて再利用されるべきです。
 
-ListenAndServe starts an HTTP server with a given address and handler.
-The handler is usually nil, which means to use DefaultServeMux.
-Handle and HandleFunc add handlers to DefaultServeMux:
+ListenAndServeは与えられたアドレスとハンドラを使ってHTTPサーバを開始します。
+ハンドラはたいていはnilであり、その場合はDefaultServeMuxが使われます。
+HandleとHandleFuncはDefaultServeMuxにハンドラを追加します。
 
 	http.Handle("/foo", fooHandler)
 
@@ -65,8 +65,7 @@ Handle and HandleFunc add handlers to DefaultServeMux:
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
-More control over the server's behavior is available by creating a
-custom Server:
+独自にServerを作成することで、サーバの振る舞いをさらに制御することが可能です。
 
 	s := &http.Server{
 		Addr:           ":8080",
@@ -76,5 +75,7 @@ custom Server:
 		MaxHeaderBytes: 1 << 20,
 	}
 	log.Fatal(s.ListenAndServe())
+
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/src/pkg/net/http/doc.go?r=09a1cf0d94b2b6cf672f8dcd04c6962e0916bc4e
 */
 package http
