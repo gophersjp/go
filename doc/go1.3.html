@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=900650e66b4f3431cdef2271ce00813813c466bf
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=603f6c3b152cba501098d410b21b4ebad730a52b
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -589,6 +589,17 @@ HTTPのkeep-alivesを無効にできます。
 プログラムは常にクラッシュし、デッドロックを報告します。
 このようなケースで、以前のバージョンは一貫性がありませんでした。
 ほとんどのケースでデッドロックを報告していましたが、いくつかの簡単なケースでは問題なく終了していました。
+</li>
+
+<li>
+<!--
+The runtime/debug package now has a new function
+<a href="/pkg/runtime/debug/#WriteHeapDump"><code>debug.WriteHeapDump</code></a>
+that writes out a description of the heap.
+-->
+runtime/debug パッケージに、ヒープを書き出す新しい関数
+<a href="/pkg/runtime/debug/#WriteHeapDump"><code>debug.WriteHeapDump</code></a>
+が追加されました。
 </li>
 
 <li>
