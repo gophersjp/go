@@ -1,0 +1,102 @@
+<!--{
+	"Title": "コマンドドキュメント",
+	"Path":  "/doc/cmd"
+}-->
+
+<!--
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/cmd.html?r=d1628698b8c8e0024713488b10f5ddf2813e2fa4
+-->
+
+<p>
+Goのソースコードをビルドしたり処理するプログラム一式はあります。
+これらは直接起動するよりも、<a href="/cmd/go/">go</a>プログラムによって起動されることがほとんどです。
+</p>
+
+<p>
+これらのプログラムを起動する一般的な方法は、例えば<code>go fmt</code>のように、goプログラムのサブコマンドとしてです。
+このように起動すると、コマンドはGoのソースコードのパッケージ群全体に対して、パッケージごとに基となるバイナリを引数付きで起動し、適切に処理されます。
+</p>
+
+<p>
+プログラムは単独のバイナリとしても起動できます。
+go <code>tool</code>サブコマンドを使うことで、例えば<code>go tool vet</code>のように、引数を変えずに起動できます。
+この実行スタイルを使うことで、例えばパッケージ全体ではなく、一つのソースファイルをチェックすることができます: 
+<code>go vet mypackage</code>に対して、<code>go tool vet myprogram.go</code>。
+いくつかのコマンド、例えば<code>yacc</code>などは、go <code>tool</code>サブコマンドからのみ使用可能です。
+</p>
+
+<p>
+最後に、<code>fmt</code>と<code>godoc</code>コマンドはよく使用されるため、
+<code>gofmt</code>と<code>godoc</code>という普通のバイナリとしてインストールされています。
+</p>
+
+<p>
+より詳細なドキュメントや起動方法、使用方法をみるには、リンクをクリックしてください。
+</p>
+
+<table class="dir">
+<tr>
+<th>名前</th>
+<th>&nbsp;&nbsp;&nbsp;&nbsp;</th>
+<th>概要</th>
+</tr>
+
+<tr>
+<td><a href="/cmd/go/">go</a></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td>
+<code>go</code>プログラムはGoのソースコードを処理し、ここに列挙しているコマンドを実行します。
+使い方の詳細は、コマンドのドキュメントをみてください。
+<br><br>
+</td>
+</tr>
+
+<tr>
+<td><a href="/cmd/cgo/">cgo</a></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td>CgoはCのコードを呼び出すGoパッケージの作成を可能にします。</td>
+</tr>
+
+<tr>
+<td><a href="http://godoc.org/code.google.com/p/go.tools/cmd/cover/">cover</a></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td>Coverは<code>"go test -coverprofile"</code>によって生成されるカバレッジプロファイルを解析するプログラムです。</td>
+</tr>
+
+<tr>
+<td><a href="/cmd/fix/">fix</a></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td>Fixは古い言語機能やライブラリを見つけ、新しいものに書き換えるGoプログラムです。</td>
+</tr>
+
+<tr>
+<td><a href="/cmd/go/">fmt</a></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td>FmtはGoパッケージのフォーマットを整えます。
+これは独立した<a href="/cmd/gofmt/">gofmt</a>コマンドとしても使用でき、より汎用的なオプションを指定できます。</td>
+</tr>
+
+<tr>
+<td><a href="http://godoc.org/code.google.com/p/go.tools/cmd/godoc/">godoc</a></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td>GodocはGoパッケージのドキュメントを抽出し、生成します。</td>
+</tr>
+
+<tr>
+<td><a href="http://godoc.org/code.google.com/p/go.tools/cmd/vet/">vet</a></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td>VetはGoのソースコードを調査し、怪しい構文、例えば引数がフォーマット文字列と揃っていないPrintf呼び出しを報告します。 </td>
+</tr>
+
+<tr>
+<td><a href="/cmd/yacc/">yacc</a></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td>YaccはGoで実装されたパーサーを出力するバージョンのyaccです。</td>
+</tr>
+
+</table>
+
+<p>
+このリストは要約版です。
+コンパイラなどのドキュメントは、<a href="/cmd/">全コマンドのリファレンス</a>をみてください。
+</p>
