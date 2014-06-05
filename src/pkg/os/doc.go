@@ -6,108 +6,107 @@ package os
 
 import "time"
 
-// FindProcess looks for a running process by its pid.
-// The Process it returns can be used to obtain information
-// about the underlying operating system process.
+// FindProcessはpidを用いて実行中のプロセスを探します。
+// 返されるProcessは実際のOSのプロセスに関する情報を得るために使うことができます。
 func FindProcess(pid int) (p *Process, err error) {
 	return findProcess(pid)
 }
 
-// StartProcess starts a new process with the program, arguments and attributes
-// specified by name, argv and attr.
+// StartProcessはname、argv、attrにて示されるプログラム、引数、属性を用いて
+// 新しいプロセスを開始します。
 //
-// StartProcess is a low-level interface. The os/exec package provides
-// higher-level interfaces.
+// StartProcessは低レベルのインターフェースです。
+// os/execパッケージはより高レベルのインターフェースを提供します。
 //
-// If there is an error, it will be of type *PathError.
+// もしエラーがある場合は、*PathError型のエラーになります。
 func StartProcess(name string, argv []string, attr *ProcAttr) (*Process, error) {
 	return startProcess(name, argv, attr)
 }
 
-// Release releases any resources associated with the Process p,
-// rendering it unusable in the future.
-// Release only needs to be called if Wait is not.
+// ReleaseはProcess型の値pに関連付けられた全てのリソースを開放し、
+// この先使えなくします。
+// ReleaseはWaitが呼ばれていない場合のみ呼ぶ必要があります。
 func (p *Process) Release() error {
 	return p.release()
 }
 
-// Kill causes the Process to exit immediately.
+// KillはProcessをすぐに終了させます。
 func (p *Process) Kill() error {
 	return p.kill()
 }
 
-// Wait waits for the Process to exit, and then returns a
-// ProcessState describing its status and an error, if any.
-// Wait releases any resources associated with the Process.
-// On most operating systems, the Process must be a child
-// of the current process or an error will be returned.
+// WaitはProcessが終了するのを待ち、そのステータスを表すProcessStateと、
+// あればerrorを返します。
+// WaitはProcessに関連付けられた全てのリソースを開放します。
+// ほとんどのOSでは、Processは現在のプロセスの子プロセスでなければならず、
+// そうでなければerrorが返ります。
 func (p *Process) Wait() (*ProcessState, error) {
 	return p.wait()
 }
 
-// Signal sends a signal to the Process.
-// Sending Interrupt on Windows is not implemented.
+// SignalはProcessにシグナルを送ります。
+// Windowsにおける割り込みの送信は実装されていません。
 func (p *Process) Signal(sig Signal) error {
 	return p.signal(sig)
 }
 
-// UserTime returns the user CPU time of the exited process and its children.
+// UserTimeは終了したプロセスとその全ての子プロセスのユーザCPU時間を返します。
 func (p *ProcessState) UserTime() time.Duration {
 	return p.userTime()
 }
 
-// SystemTime returns the system CPU time of the exited process and its children.
+// SystemTimeは終了したプロセスとその全ての子プロセスのシステムCPU時間を返します。
 func (p *ProcessState) SystemTime() time.Duration {
 	return p.systemTime()
 }
 
-// Exited reports whether the program has exited.
+// Exitedはプログラムが終了したかどうかを返します。
 func (p *ProcessState) Exited() bool {
 	return p.exited()
 }
 
-// Success reports whether the program exited successfully,
-// such as with exit status 0 on Unix.
+// Successはプログラムが成功(Unixならば終了ステータス0)で終了したかどうかを
+// 返します。
 func (p *ProcessState) Success() bool {
 	return p.success()
 }
 
-// Sys returns system-dependent exit information about
-// the process.  Convert it to the appropriate underlying
-// type, such as syscall.WaitStatus on Unix, to access its contents.
+// Sysはプロセスのシステム依存な終了情報を返します。
+// 内容にアクセスするには適切な実際の型(Unixならばsyscall.WaitStatus)に
+// 変換して下さい。
 func (p *ProcessState) Sys() interface{} {
 	return p.sys()
 }
 
-// SysUsage returns system-dependent resource usage information about
-// the exited process.  Convert it to the appropriate underlying
-// type, such as *syscall.Rusage on Unix, to access its contents.
-// (On Unix, *syscall.Rusage matches struct rusage as defined in the
-// getrusage(2) manual page.)
+// SysUsageは終了したプロセスのシステム依存なリソース利用状況の情報を返します。
+// 内容にアクセスするには適切な実際の型(Unixならば*syscall.Rusage)に変換して
+// ください。
+// (Unixでは、*syscall.Rusageがgetrusage(2)のmanページに定義されているrusage
+// 構造体に相当します。)
 func (p *ProcessState) SysUsage() interface{} {
 	return p.sysUsage()
 }
 
-// Hostname returns the host name reported by the kernel.
+// Hostnameはカーネルが返すホスト名を返します。
 func Hostname() (name string, err error) {
 	return hostname()
 }
 
-// Readdir reads the contents of the directory associated with file and
-// returns a slice of up to n FileInfo values, as would be returned
-// by Lstat, in directory order. Subsequent calls on the same file will yield
-// further FileInfos.
+// Readdirはfに関連付けられたディレクトリの内容を読み、Lstatが返すような
+// FileInfoの値をn個まで持ったスライスを返します。
+// 同じfに対して続けて呼ぶと、さらにFileInfoが得られます。
 //
-// If n > 0, Readdir returns at most n FileInfo structures. In this case, if
-// Readdir returns an empty slice, it will return a non-nil error
-// explaining why. At the end of a directory, the error is io.EOF.
+// nが0より大きい場合、Readdirは最大n個のFileInfo構造体を返します。
+// この場合では、Readdirの返すスライスが空だと、その理由を示す非nilのerrorが
+// 返ります。
+// ディレクトリの最後では、errorはio.EOFになります。
 //
-// If n <= 0, Readdir returns all the FileInfo from the directory in
-// a single slice. In this case, if Readdir succeeds (reads all
-// the way to the end of the directory), it returns the slice and a
-// nil error. If it encounters an error before the end of the
-// directory, Readdir returns the FileInfo read until that point
-// and a non-nil error.
+// nが0以下の場合、Readdirはそのディレクトリの全てのFileInfoを1つのスライスで
+// 返します。
+// この場合では、Readdirが成功(ディレクトリの全てを読んだ)だと、スライスとnilの
+// errorが返ります。
+// ディレクトリを全て読む前にエラーが発生すると、Readdirはそこまで読んだ結果の
+// FileInfoと非nilのerrorを返します。
 func (f *File) Readdir(n int) (fi []FileInfo, err error) {
 	if f == nil {
 		return nil, ErrInvalid
@@ -115,18 +114,18 @@ func (f *File) Readdir(n int) (fi []FileInfo, err error) {
 	return f.readdir(n)
 }
 
-// Readdirnames reads and returns a slice of names from the directory f.
+// Readdirnamesはディレクトリfを読んで名前のスライスを返します。
 //
-// If n > 0, Readdirnames returns at most n names. In this case, if
-// Readdirnames returns an empty slice, it will return a non-nil error
-// explaining why. At the end of a directory, the error is io.EOF.
+// nが0より大きい場合、Readdirnamesは最大n個の名前を返します。
+// この場合では、Readdirnamesの返すスライスが空だと、その理由を示す非nilのerror
+// が返ります。
 //
-// If n <= 0, Readdirnames returns all the names from the directory in
-// a single slice. In this case, if Readdirnames succeeds (reads all
-// the way to the end of the directory), it returns the slice and a
-// nil error. If it encounters an error before the end of the
-// directory, Readdirnames returns the names read until that point and
-// a non-nil error.
+// nが0以下の場合、Readdirnamesはそのディレクトリの全ての名前を1つのスライスで
+// 返します。
+// この場合では、Readdirnamesが成功(ディレクトリの全てを読んだ)だと、スライスと
+// nilのerrorが返ります。
+// ディレクトリを全て読む前にエラーが発生すると、Readdirnamesはそこまで読んだ
+// 結果の名前と非nilのerrorを返します。
 func (f *File) Readdirnames(n int) (names []string, err error) {
 	if f == nil {
 		return nil, ErrInvalid
