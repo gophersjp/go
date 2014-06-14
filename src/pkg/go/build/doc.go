@@ -2,135 +2,137 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package build gathers information about Go packages.
+// buildパッケージはGoのパッケージの情報を収集します。
 //
 // Go Path
 //
-// The Go path is a list of directory trees containing Go source code.
-// It is consulted to resolve imports that cannot be found in the standard
-// Go tree.  The default path is the value of the GOPATH environment
-// variable, interpreted as a path list appropriate to the operating system
-// (on Unix, the variable is a colon-separated string;
-// on Windows, a semicolon-separated string;
-// on Plan 9, a list).
+// GoのパスはGoのソースコードが入ったディレクトリツリーのリストです。
+// 標準のGoのツリー内に見つからなかったインポートはここから探されます。
+// デフォルトのパスはGOPATH環境変数の値で、OSに応じたパスのリストとして
+// 解釈されます(Unixならばコロン区切りの文字列、
+// Windowsならばセミコロン区切りの文字列、Plan 9ならばリスト)。
 //
-// Each directory listed in the Go path must have a prescribed structure:
+// Goのパスにあるそれぞれのディレクトリはあらかじめ決められた構造を持ちます。
 //
-// The src/ directory holds source code.  The path below 'src' determines
-// the import path or executable name.
+// src/ディレクトリにはソースコードが入ります。
+// 'src'以下のパスがインポートするパスや実行ファイルの名前になります。
 //
-// The pkg/ directory holds installed package objects.
-// As in the Go tree, each target operating system and
-// architecture pair has its own subdirectory of pkg
-// (pkg/GOOS_GOARCH).
+// pkg/ディレクトリにはインストールされたパッケージオブジェクトが入ります。
+// Goのツリーでは、ターゲットとするOSとアーキテクチャのペアごとにサブディレクトリ
+// (pkg/GOOS_GOARCH)が作られます。
 //
-// If DIR is a directory listed in the Go path, a package with
-// source in DIR/src/foo/bar can be imported as "foo/bar" and
-// has its compiled form installed to "DIR/pkg/GOOS_GOARCH/foo/bar.a"
-// (or, for gccgo, "DIR/pkg/gccgo/foo/libbar.a").
+// DIRがGoのパスにあるディレクトリとすると、
+// DIR/src/foo/barは"foo/bar"としてインポートされ、
+// "DIR/pkg/GOOS_GOARCH/foo/bar.a"としてコンパイルされます。
+// (gccgoの場合は"DIR/pkg/gccgo/foo/libbar.a")
 //
-// The bin/ directory holds compiled commands.
-// Each command is named for its source directory, but only
-// using the final element, not the entire path.  That is, the
-// command with source in DIR/src/foo/quux is installed into
-// DIR/bin/quux, not DIR/bin/foo/quux.  The foo/ is stripped
-// so that you can add DIR/bin to your PATH to get at the
-// installed commands.
+// bin/ディレクトリにはコンパイル済みのコマンドが入ります。
+// 各コマンドはソースディレクトリに基いて名前が付けられますが、
+// パス全体ではなく、最後の要素だけが使われます。
+// つまり、DIR/src/foo/quuxはDIR/bin/quuxになるのであって、
+// DIR/bin/foo/quuxにはなりません。
+// DIR/binをPATHに加えればインストールされたコマンドを使えるようにするために、
+// fooは取り除かれます。
 //
-// Here's an example directory layout:
+// 以下はディレクトリレイアウトの例です。
 //
 //	GOPATH=/home/user/gocode
 //
 //	/home/user/gocode/
 //	    src/
 //	        foo/
-//	            bar/               (go code in package bar)
+//	            bar/               (barパッケージのgoコード)
 //	                x.go
-//	            quux/              (go code in package main)
+//	            quux/              (mainパッケージのgoコード)
 //	                y.go
 //	    bin/
-//	        quux                   (installed command)
+//	        quux                   (インストールされたコマンド)
 //	    pkg/
 //	        linux_amd64/
 //	            foo/
-//	                bar.a          (installed package object)
+//	                bar.a          (インストールされたパッケージオブジェクト)
 //
 // Build Constraints
 //
-// A build constraint, also known as a build tag, is a line comment that begins
+// ビルド制約はビルドタグとしても知られており、以下に示す文字列で始まる行コメント
+// です。
 //
 //	// +build
 //
-// that lists the conditions under which a file should be included in the package.
-// Constraints may appear in any kind of source file (not just Go), but
-// they must appear near the top of the file, preceded
-// only by blank lines and other line comments. These rules mean that in Go
-// files a build constraint must appear before the package clause.
+// この後にそのファイルがパッケージに含められる条件を列挙します。
+// 制約はGoに限らずあらゆる種類のソースコードに記載できますが、
+// ファイルの先頭付近に存在する必要があり、
+// 空行や他の行コメントよりも先に存在する必要があります。
+// まとめると、Goのファイルではビルド制約はパッケージ文より前に存在しなければ
+// ならないということになります。
 //
-// To distinguish build constraints from package documentation, a series of
-// build constraints must be followed by a blank line.
+// パッケージドキュメントとビルド制約を識別するために、
+// ビルド制約の前に空行を1行入れる必要があります。
 //
-// A build constraint is evaluated as the OR of space-separated options;
-// each option evaluates as the AND of its comma-separated terms;
-// and each term is an alphanumeric word or, preceded by !, its negation.
-// That is, the build constraint:
+// ビルド制約は、スペースで区切るとOR条件になり、
+// カンマで区切るとAND条件になります。
+// それぞれの語は英数字の単語で、先頭に!を付けると否定になります。
+// 以下にビルド制約の例を示します。
 //
 //	// +build linux,386 darwin,!cgo
 //
-// corresponds to the boolean formula:
+// これは以下のような論理式を意味します。
 //
 //	(linux AND 386) OR (darwin AND (NOT cgo))
 //
-// A file may have multiple build constraints. The overall constraint is the AND
-// of the individual constraints. That is, the build constraints:
+// ひとつのファイルは複数のビルド制約を持つことができます。
+// 全体としての制約は個々の制約をANDで組み合わせたものになります。
+// 以下のようなビルド制約があるとします。
 //
 //	// +build linux darwin
 //	// +build 386
 //
-// corresponds to the boolean formula:
+// これは以下のような論理式を意味します。
 //
 //	(linux OR darwin) AND 386
 //
-// During a particular build, the following words are satisfied:
+// 以下の条件は毎回のビルドで満たされます。
 //
-//	- the target operating system, as spelled by runtime.GOOS
-//	- the target architecture, as spelled by runtime.GOARCH
-//	- the compiler being used, either "gc" or "gccgo"
-//	- "cgo", if ctxt.CgoEnabled is true
-//	- "go1.1", from Go version 1.1 onward
-//	- "go1.2", from Go version 1.2 onward
-//	- any additional words listed in ctxt.BuildTags
+//  - runtime.GOOSで示される対象OS
+//  - runtime.GOARCHで示される対象アーキテクチャ
+//  - "gc"あるいは"gccgo"のどちらかの使われているコンパイラ
+//  - ctxt.CgoEnabledがtrueの場合、"cgo"
+//  - Goのバージョンが1.1の場合、"go1.1"
+//  - Goのバージョンが1.2の場合、"go1.2"
+//  - ctxt.BuildTagsに列挙された追加の条件
 //
-// If a file's name, after stripping the extension and a possible _test suffix,
-// matches any of the following patterns:
+// ファイル名から拡張子と(あれば)_test接尾詞を除いたものが、
+// 以下のパターンのいずれかにマッチする場合、
 //	*_GOOS
 // 	*_GOARCH
 // 	*_GOOS_GOARCH
-// (example: source_windows_amd64.go) or the literals:
+// (例: source_windows_amd64.go)または以下のリテラルである場合、
 //	GOOS
 // 	GOARCH
-// (example: windows.go) where GOOS and GOARCH represent any known operating
-// system and architecture values respectively, then the file is considered to
-// have an implicit build constraint requiring those terms.
+// (例: windows.go) GOOSとGOARCHはそれぞれ既知のOSとアーキテクチャの値を取り、
+// ファイルはそれらの語が示すビルド制約を暗黙的に持つものとして扱われます。
 //
-// To keep a file from being considered for the build:
+// ファイルをビルドしないようにするには以下のようにします。
 //
 //	// +build ignore
 //
-// (any other unsatisfied word will work as well, but ``ignore'' is conventional.)
+// (他の条件に関係なく``ignore''は効果を発揮します。)
 //
-// To build a file only when using cgo, and only on Linux and OS X:
+// ファイルをcgoだけを使ってLinuxとOS X上だけでビルドするには以下のようにします。
 //
 //	// +build linux,cgo darwin,cgo
 //
-// Such a file is usually paired with another file implementing the
-// default functionality for other systems, which in this case would
-// carry the constraint:
+// このようなファイルはたいてい他のシステム用のデフォルトの振る舞いを実装した
+// ファイルとペアになっており、そちらのファイルには以下のような制約が必要になる
+// でしょう。
 //
 //	// +build !linux,!darwin !cgo
 //
-// Naming a file dns_windows.go will cause it to be included only when
-// building the package for Windows; similarly, math_386.s will be included
-// only when building the package for 32-bit x86.
+// dns_windows.goというファイル名を付けると、Windows向けにパッケージをビルドした
+// ときだけそのファイルが含まれるようになります。
+// 同様に、math_386.sは32ビットのx86向けにパッケージをビルドしたときだけ
+// 含まれます。
+//
+// 本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/src/pkg/go/build/doc.go?r=5a3e576cfb5623d43ba2744d655d0c2c7b6bebd1
 //
 package build
