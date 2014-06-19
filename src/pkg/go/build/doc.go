@@ -98,6 +98,7 @@
 //  - ctxt.CgoEnabledがtrueの場合、"cgo"
 //  - Goのバージョンが1.1の場合、"go1.1"
 //  - Goのバージョンが1.2の場合、"go1.2"
+//  - Goのバージョンが1.3の場合、"go1.3"
 //  - ctxt.BuildTagsに列挙された追加の条件
 //
 // ファイル名から拡張子と(あれば)_test接尾詞を除いたものが、
@@ -130,6 +131,6 @@
 // Windows向けにパッケージをビルドしたときだけそのファイルが含まれるようになります。
 // 同様に、math_386.sは32ビットのx86向けにパッケージをビルドしたときだけ含まれます。
 //
-// 本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/src/pkg/go/build/doc.go?r=5a3e576cfb5623d43ba2744d655d0c2c7b6bebd1
+// 本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/src/pkg/go/build/doc.go?r=f15ad332ce135a5b23bfb7d521594afe9fd42f8b
 //
 package build
