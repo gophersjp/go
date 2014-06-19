@@ -5,7 +5,7 @@
 }-->
 
 <!--
-本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=603f6c3b152cba501098d410b21b4ebad730a52b
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go1.3.html?r=d011c0dcae9cdbfb93c8688a88dd6be32a84c5fe
 -->
 
 <h2 id="introduction">Go1.3のイントロダクション</h2>
@@ -376,6 +376,16 @@ Goコマンドツールチェーンで、アセンブラはGo flagパッケー�
 (同様の変更は、<a href="/doc/go1.1#gc_flag">Go 1.1</a>のときにリンカとコンパイラにもありました。)
 </p>
 
+<h3 id="godoc">godocの変更</h3>
+<p>
+<a href="http://godoc.org/code.google.com/p/go.tools/cmd/godoc">godoc</a>を
+<code>-analysis</code>フラグつきで実行すると、
+コードに対して高度な<a href="/lib/godoc/analysis/help.html">静的解析</a>をするようになりました。
+解析結果はソースビューとドキュメントビューのどちらでもみることができ、パッケージごとの関数の呼び出しグラフ、
+定義と参照、型とそのメソッド、インタフェースとその実装、チャネルの送信と受信、関数とその呼び出し元、
+呼び出す場所と呼び出されるもの同士の関連性が含まれています。
+</p>
+
 <h3 id="misc">その他</h3>
 
 <p>
@@ -471,12 +481,6 @@ ServerNameが指定されている場合、ServerNameの使用が強制されま
 <ul>
 
 <li>
-複素数の累乗を計算する<a href="/pkg/math/cmplx/#Pow"><code>Pow</code></a>関数に関して、
-1番目の引数が0だった場合の振る舞いを定義しました。このケースは、以前は定義されていませんでした。
-詳細はこちらの<a href="/pkg/math/cmplx/#Pow">ドキュメント</a>を参照して下さい。
-</li>
-
-<li>
 <a href="/pkg/crypto/tls/"><code>crypto/tls</code></a>パッケージに、
 <a href="/pkg/crypto/tls/#DialWithDialer"><code>DialWithDialer</code></a>関数が追加されました。
 これを使うと、既存のdialerを使用してTLS接続できます。タイムアウトのような接続オプションはより簡単に制御できるようになります。
@@ -504,7 +508,7 @@ PKCS#10証明書署名要求の解析をサポートします。
 </li>
 
 <li>
-複素べき関数の<a href="/pkg/math/cmplx/#Pow"><code>Pow</code></a>で第一引数がゼロのときの振る舞いが定義されました。
+複素べき関数の<a href="/pkg/math/cmplx/#Pow"><code>Pow</code></a>で第一引数が0だった場合の振る舞いが定義されました。
 これまでは未定義でした。
 詳細は<a href="/pkg/math/cmplx/#Pow">関数ドキュメント</a>にあります。
 </li>
