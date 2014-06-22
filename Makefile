@@ -1,4 +1,5 @@
 GODOC_REV=d8700e870053
+GO_VER=go1.3
 
 WORKSPACE:=$(shell pwd)/_tmp
 export GOPATH=${WORKSPACE}/sub
@@ -7,6 +8,7 @@ export PATH:=${GOPATH}/bin:${PATH}
 _GOROOT:=${WORKSPACE}/go
 GOREPO=code.google.com/p
 APP=${GOPATH}/src/godoc
+APP_CONTENTS=${APP}/doc/godoc.zip
 
 .PHONY: all
 all: update build_doc
@@ -23,15 +25,10 @@ ${tr_status}: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
 	mkdir -p ${_GOROOT}/status
 	translate-status -docroot=$(shell pwd) -goroot=${_GOROOT} -o=$@
 
-build_doc: update_doc ${tr_status} ${APP}/doc/godoc.zip
+build_doc: update_doc ${tr_status} ${APP_CONTENTS}
 
 .PHONY: update_doc
 update_doc: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
-	cd ${_GOROOT};\
-	rm -rf ${_GOROOT}/src/pkg/${GOREPO};\
-	hg checkout tip -C;\
-	hg --config extensions.purge= clean
-
 	#cd ${GOPATH}/src; find code.google.com/p/go.tools -type d -not -path '*/.hg/*'\
 	#	-exec mkdir -p '${_GOROOT}/src/pkg/{}' ';'
 	#cd ${GOPATH}/src; find code.google.com/p/go.tools -type f -not -path '*/.hg/*'\
@@ -41,10 +38,16 @@ update_doc: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
 	find */ -type f -not -path '.*' -not -path '_tmp/*' \
 		-exec cp '{}' '${_GOROOT}/{}' ';'
 
-${APP}/doc/godoc.zip: update_doc
+${APP_CONTENTS}: update_doc
 	which zip || sudo apt-get install zip
 	mkdir -p ${APP}/doc
-	zip -q -r $@ ${_GOROOT}/*
+	cd ${_GOROOT}/../;\
+	zip -q -r $@ go/*
+
+public:
+	cp _robots.txt ${_GOROOT}/robots.txt
+	cd ${_GOROOT}/../;\
+	zip -f -r ${APP_CONTENTS} go/*
 
 .PHONY: run
 run: update_doc
@@ -54,7 +57,7 @@ run: update_doc
 godep:
 	which godep ||go get -u github.com/kr/godep
 
-{APP}/.git: godep
+${APP}/godeps: godep
 	cd ${GOPATH}/src/${GOREPO}/go.tools; hg checkout ${GODOC_REV}
 
 	mkdir -p ${APP}
@@ -63,20 +66,28 @@ godep:
 	git init;\
 	git add -A;\
 	git commit -a -m "Add godoc app";\
-	echo 'web: godoc -http=:$$PORT -play -zip=doc/godoc.zip -goroot=${_GOROOT}' > Procfile;\
+	echo 'web: godoc -http=:$$PORT -play -zip=doc/godoc.zip -goroot=/go' > Procfile;\
 	git add -A;\
 	git commit -a -m "Add Procfile";\
 	godep save;\
 	git add -A .;\
-	git commit -a -m "Save godep"
+	git commit -a -m "Save godep";\
+	cat Godeps/Godeps.json | jq -a '.GoVersion = "${GO_VER}"' > Godeps.json;\
+	mv Godeps.json Godeps/Godeps.json;\
+	git commit -a -m "go version ${GO_VER}"
 
-deploy: build_doc {APP}/.git
+
+deploy: ${APP_CONTENTS} ${APP}/godeps
 	cd ${APP};\
 	git remote add heroku-deploy ${HEROKU};\
 	git push -f heroku-deploy master;\
 
 update: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
-	cd ${_GOROOT}; hg pull; hg update tip
+	cd ${_GOROOT};\
+	rm -rf ${_GOROOT}/src/pkg/${GOREPO};\
+	hg checkout tip -C;\
+	hg --config extensions.purge= clean;\
+	hg pull; hg update tip
 	cd ${GOPATH}/src/${GOREPO}/go.tools; hg pull; hg update tip
 
 ${_GOROOT}:
