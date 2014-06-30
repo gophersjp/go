@@ -1,0 +1,498 @@
+<!--{
+	"Title": "Goのメモリモデル",
+	"Subtitle": "バージョン 2014/5/31",
+	"Path": "/ref/mem"
+}-->
+
+<!--
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/doc/go_mem.html?r=12c9a9ff50d8b990bf4f1c04ef8d5e52091d2853
+-->
+
+<style>
+p.rule {
+  font-style: italic;
+}
+span.event {
+  font-style: italic;
+}
+</style>
+
+<h2>はじめに</h2>
+
+<p>
+Goのメモリモデルは、あるゴルーチンで変数を読み取り中に他のゴルーチンから同じ変数に書き込みがあった場合、
+書き込みされた結果を読み取り側から観測することが保証できる条件を指定します。
+</p>
+
+<h2>前事象</h2>
+
+<p>
+1つのゴルーチン中では、読み取りと書き込みはプログラムで指定された順序で実行されたかのように振る舞わなければいけません。
+すなわち、1つのゴルーチン中での読み取りと書き込みの実行順の変更が言語仕様によって定義された振る舞いを変えない限り、
+コンパイラとプロセッサは、読み取りと書き込みの実行順を変更する可能性があります。
+そのため、それぞれのゴルーチンで観測される実行順は違うかもしれません。
+例えば、あるゴルーチンで<code>a = 1; b = 2;</code>を実行するとしましょう。
+他のゴルーチンでは、<code>a</code>の更新よりも先に、<code>b</code>の更新を観測することがあります。
+</p>
+
+<p>
+読み取りと書き込みの要件を指定するため、<i>前事象</i>、つまりGoにおけるメモリ操作の半順序を定義します。
+もし、イベント<span class="event">e<sub>1</sub></span>がイベント<span class="event">e<sub>2</sub></span>の前に起きる場合、
+これを<span class="event">e<sub>2</sub></span>が<span class="event">e<sub>1</sub></span>の後に起きると呼びます。
+また、もし<span class="event">e<sub>1</sub></span>が<span class="event">e<sub>2</sub></span>の前にも後にも起きない場合、
+これを<span class="event">e<sub>1</sub></span>と<span class="event">e<sub>2</sub></span>が同時に起きると呼びます。
+</p>
+
+<p class="rule">
+1つのゴルーチン中では、前事象の順序はプログラムに記述された順序と同様となる。
+</p>
+
+<p>
+次の条件が両方満たされる場合、変数<code>v</code>の読み込み<span class="event">r</span>は、変数<code>v</code>への書き込み<span class="event">w</span>を観測することを<i>許可</i>されます。
+</p>
+
+<ol>
+<li><span class="event">r</span>は、<span class="event">w</span>の前に起こらない。</li>
+<li><span class="event">w</span>と<span class="event">r</span>の間に、他の<code>v</code>への書き込み<span class="event">w'</span>がない。</li>
+</ol>
+
+<p>
+変数<code>v</code>の読み込み<span class="event">r</span>が特定の変数<code>v</code>の書き込み<span class="event">w</span>を観測することを保証するためには、
+<span class="event">r</span>から観測できる書き込みが<span class="event">w</span>だけであることを確認します。
+すなわち、次の条件が両方満たされる場合、<span class="event">r</span>が<span class="event">w</span>を観測することを<i>保証</i>します。
+</p>
+
+<ol>
+<li><span class="event">w</span>が<span class="event">r</span>の前に起こる。</li>
+<li>共有変数<code>v</code>への他のいかなる書き込みも、<span class="event">w</span>の前か<span class="event">r</span>の後に起こる。</li>
+</ol>
+
+<p>
+この2つの条件は、最初の条件よりも強い制約です。
+これは、<span class="event">w</span>または<span class="event">r</span>と同時に他の書き込みが行われないことを要求します。
+</p>
+
+<p>
+1つのゴルーチン内では並行性がないので、以下の2つの定義は同値です。
+読み込み<span class="event">r</span>は、最も最近の<code>v</code>への書き込み<span class="event">w</span>によって書き込まれた値を観測します。
+複数のゴルーチンから共有変数<code>v</code>にアクセスする場合、同期イベントを使用して望んだ書き込み結果を観測できるように前事象条件を満たす必要があります。
+</p>
+
+<p>
+変数<code>v</code>は<code>v</code>型のゼロ値で初期化されますが、これはメモリモデルの書き込みと同様に振る舞います。
+</p>
+
+<p>
+マシンのワードサイズより大きい値の読み込みと書き込みは、複数のマシンワードサイズ単位の操作として処理されます。
+その際、操作の実行順は規定されていません。
+</p>
+
+<h2>同期</h2>
+
+<h3>初期化</h3>
+
+<p>
+プログラムの初期化は、1つのゴルーチンで実行されます。そのゴルーチンから他のゴルーチンを実行した場合は、並行に初期化が実行されます。
+</p>
+
+<p class="rule">
+もし、パッケージ<code>p</code>がパッケージ<code>q</code>をインポートしているとすると、
+<code>q<code>の初期化関数の実行が完了するまで、<code>p</code>のいかなる処理も実行されません。
+</p>
+
+<p class="rule">
+<code>main.main</code>関数は、全ての<code>init</code>関数が完了した後で実行されます。
+</p>
+
+<h3>ゴルーチンの起動</h3>
+
+<p class="rule">
+新たにゴルーチンを起動する<code>go</code>文は、ゴルーチンの実行がはじまる前に起きます。
+</p>
+
+<p>
+例として、次のプログラムを見て下さい。
+</p>
+
+<pre>
+var a string
+
+func f() {
+	print(a)
+}
+
+func hello() {
+	a = "hello, world"
+	go f()
+}
+</pre>
+
+<p>
+<code>hello</code>関数を呼び出すと、いずれかの時点で<code>"hello, world"</code>がコンソールに出力されます
+(おそらく、<code>hello</code>関数の呼び出しが終了した後に出力されるでしょう)。
+</p>
+
+<h3>ゴルーチンの破棄</h3>
+
+<p>
+ゴルーチンの終了前に、プログラム中のどの処理も先に実行されることは保証されません。
+例えば、次のプログラムを見て下さい。
+</p>
+
+<pre>
+var a string
+
+func hello() {
+	go func() { a = "hello" }()
+	print(a)
+}
+</pre>
+
+<p>
+同期イベントがないため、他のゴルーチンから<code>a</code>への代入結果(<code>"hello"</code>)を観測できるかどうかは保証されません。
+実際、コンパイラによっては<code>go</code>文全体を削除することもあるでしょう。
+</p>
+
+<p>
+ゴルーチン内での変更を他のゴルーチンからも観測したければ、ロックやチャネルのような同期メカニズムを使用して、
+相対的な実行順を確立しましょう。
+</p>
+
+<h3>チャネルによる通信</h3>
+
+<p>
+ゴルーチン間の同期させるため、よく使われる方法はチャネルによる通信です。
+特定のチャネルへの送信は、そのチャネルから受信に対応づけられます。
+送信と受信は、通常は異なるゴルーチンで行われます。
+</p>
+
+<p class="rule">
+チャネルへの送信は、チャネルからの受信が完了する前に起こる。
+</p>
+
+<p>
+次のプログラムを見て下さい。
+</p>
+
+<pre>
+var c = make(chan int, 10)
+var a string
+
+func f() {
+	a = "hello, world"
+	c &lt;- 0
+}
+
+func main() {
+	go f()
+	&lt;-c
+	print(a)
+}
+</pre>
+
+<p>
+上記プログラムは、<code>"hello, world"</code>が必ず表示されます。
+変数<code>a</code>への書き込みはチャネル<code>c</code>への送信の前に起こります。
+一方でチャネル<code>c</code>からの受信は、チャネル<code>c</code>への送信が行われるまで完了しないため、
+<code>print</code>は必ず実行されます。
+</p>
+
+<p class="rule">
+チャネルの閉じられた後で、チャネルからチャネルが閉じられたことを示すゼロ値を受信する。
+</p>
+
+<p>
+先ほどの例では、<code>c &lt;- 0</code>を<code>close(c)</code>に置き換えても、同じ結果になります。
+</p>
+
+<p class="rule">
+バッファなしチャネルは、チャネルへの送信が完了する前に、チャネルからの受信が起こる。
+</p>
+
+<p>
+次のプログラムを見て下さい(先ほどの例とほとんど同じですが、バッファなしチャネルを使用している点と、受信と送信の順番が入れ替わっている点が異なります)。
+</p>
+
+<pre>
+var c = make(chan int)
+var a string
+
+func f() {
+	a = "hello, world"
+	&lt;-c
+}
+</pre>
+
+<pre>
+func main() {
+	go f()
+	c &lt;- 0
+	print(a)
+}
+</pre>
+
+<p>
+上記プログラムも、必ず<code>"hello, world"</code>が表示されます。
+変数<code>a</code>への書き込みはチャネル<code>c</code>からの受信の前に起こります。
+一方でチャネル<code>c</code>への送信は、チャネル<code>c</code>からの受信が行われるまで完了しないため、
+<code>print</code>は必ず実行されます。
+</p>
+
+<p>
+チャネルにバッファがあると(例えば、<code>c = make(chan, int, 1)</code>に変更する)、
+上記プログラムは常に<code>"hello, world"</code>を出力するとは限りません(空文字を出力したり、あるいは異常終了してしまうなど挙動が不安定になります)。
+</p>
+
+<p class="rule">
+容量<i>C</i>のチャネルからの<i>k</i>回目の受信は、そのチャネルへの<i>k+C</i>回目の送信が完了する前に起こる。
+</p>
+
+<p>
+このルールは、先ほどのバッファつきチャネルのルールを一般化したものです。
+バッファつきチャネルを使って、カウンタセマフォを実装できます。
+具体的には、チャネル内のアイテム数が現在の使用数、チャネルの容量が最大同時使用数を表しているとし、
+チャネルへの送信をセマフォの取得、チャネルからの受信をセマフォからの解放に対応させます。
+これは、並行性を制限したいときによく使う書き方です。
+</p>
+
+<p>
+次のプログラムはworkリストの要素毎にゴルーチンを実行します。
+ゴルーチンの同時実行数は、<code>limit</code>チャネルを使って最大でも3つに収まるように調整されます。
+</p>
+
+<pre>
+var limit = make(chan int, 3)
+
+func main() {
+	for _, w := range work {
+		go func() {
+			limit <- 1
+			w()
+			<-limit
+		}()
+	}
+	select{}
+}
+</pre>
+
+<h3>ロック</h3>
+
+<p>
+<code>sync</code>パッケージには、<code>sync.Mutex</code>と<code>sync.RWMutex</code>の2つロックのデータ型が実装されています。
+</p>
+
+<p class="rule">
+<code>sync.Mutex</code>または<code>sync.RWMutex</code>型の変数<code>l</code>があって、<code>n &lt; m</code>とする。
+このとき、<i>n</i>回目の<code>l.Unlock()</code>呼び出しは、<i>m</i>回目の<code>l.Lock()</code>呼び出しから応答が返る前に起こる。
+</p>
+
+<p>
+次のプログラムを見て下さい。
+</p>
+
+<pre>
+var l sync.Mutex
+var a string
+
+func f() {
+	a = "hello, world"
+	l.Unlock()
+}
+
+func main() {
+	l.Lock()
+	go f()
+	l.Lock()
+	print(a)
+}
+</pre>
+
+<p>
+上記プログラムは、必ず<code>"hello, world"</code>を表示します。
+最初の<code>l.Unlock()</code>呼び出し(関数<code>f</code>中)は、2つ目の<code>l.Lock()</code>呼び出し(関数<code>main</code>中)の前に起こるので、
+<code>print</code>は必ず実行されます。
+</p>
+
+<p class="rule">
+<code>sync.RWMutex</code>型の変数<code>l</code>への<code>l.RLock</code>呼び出しはどれも、
+以下のような<i>n</i>が存在し、<code>l.RLock</code>は<i>n</i>回目の<code>l.Unlock</code>呼び出しの後で起き、
+<code>l.RUnlock</code>は<i>n</i>+1回目のl.Lock呼び出しの前に起こる。
+</p>
+
+<h3>Once</h3>
+
+<p>
+<code>sync</code>パッケージは、<code>Once</code>型を使用した、複数のゴルーチンの下で安全に初期化を行う方法を提供します。
+複数のスレッドから、特定の<code>f</code>に対して<code>once.Do(f)</code>を実行することができます。
+しかし、<code>f()</code>は1つのスレッドからしか実行されず、他の呼び出しは<code>f()</code>呼び出しが完了するまでブロックします。
+</p>
+
+<p class="rule">
+<code>once.Do(f)</code>からの<code>f()</code>の唯一の呼び出しは、どの<code>once.Do(f)</code>から呼び出し元に戻るよりも前に起こる。
+</p>
+
+<p>
+次のプログラムを見て下さい。
+</p>
+
+<pre>
+var a string
+var once sync.Once
+
+func setup() {
+	a = "hello, world"
+}
+
+func doprint() {
+	once.Do(setup)
+	print(a)
+}
+
+func twoprint() {
+	go doprint()
+	go doprint()
+}
+</pre>
+
+<p>
+<code>twoprint</code>を呼び出すと、<code>"hello, world"</code>を2回表示します。
+最初の呼び出しで、<code>doprint</code>は<code>setup</code>を一度だけ実行します。
+</p>
+
+<h2>誤った同期</h2>
+
+<p>
+読み込み<span class="event">r</span>は、並行して実行された書き込み<span class="event">w</span>を観測するかもしれないことに注意してください。
+このような場合でも、これは<span class="event">w</span>の前に起こることを、
+<span class="event">r<span>の後に起こることが観測可能だということは意味していません。
+</p>
+
+<p>
+次のプログラムを見て下さい。
+</p>
+
+<pre>
+var a, b int
+
+func f() {
+	a = 1
+	b = 2
+}
+
+func g() {
+	print(b)
+	print(a)
+}
+
+func main() {
+	go f()
+	g()
+}
+</pre>
+
+<p>
+上記プログラムは、<code>g</code>が<code>2</code>を表示した後に、<code>0</code>を表示することがあります。
+</p>
+
+<p>
+この事実により、いくつかの一般的によく使われる書き方は意図した通りに動作しません。
+</p>
+
+<p>
+ダブルチェックロッキングは、同期のオーバーヘッドを回避しようとする試みです。
+例えば、<code>twoprint</code>プログラムは、以下のように誤った書き方をされることがあります。
+</p>
+
+<pre>
+var a string
+var done bool
+
+func setup() {
+	a = "hello, world"
+	done = true
+}
+
+func doprint() {
+	if !done {
+		once.Do(setup)
+	}
+	print(a)
+}
+
+func twoprint() {
+	go doprint()
+	go doprint()
+}
+</pre>
+
+<p>
+<code>doprint</code>中で、<code>done</code>への書き込みが観測できれば、
+暗黙的に<code>a</code>への書き込みも観測できるだろうと考えてはいけません。
+このようなことは、保証されていません。
+このプログラムは、<code>"hello, world"</code>ではなく空文字列を表示することがあります。
+</p>
+
+<p>
+別の誤った書き方は、以下のようにビジーループを使用することです。
+</p>
+
+<pre>
+var a string
+var done bool
+
+func setup() {
+	a = "hello, world"
+	done = true
+}
+
+func main() {
+	go setup()
+	for !done {
+	}
+	print(a)
+}
+</pre>
+
+<p>
+これも、<code>main</code>から<code>done</code>への書き込みが観測できれば、
+暗黙的に<code>a</code>への書き込みも観測できるだろうと考えてはいけません。
+このようなことは、保証されていません。
+このプログラムも同様に、空文字列を表示することがあります。
+さらに悪いことに、2つのスレッド間で同期をとっていないため、
+<code>main</code>が<code>done</code>への書き込みを観測することも保証されません。
+そのため、<code>main</code>中のループは終了しないかもしれません。
+</p>
+
+<p>
+このテーマには、次のプログラムのように微妙なパターンがあります。
+</p>
+
+<pre>
+type T struct {
+	msg string
+}
+
+var g *T
+
+func setup() {
+	t := new(T)
+	t.msg = "hello, world"
+	g = t
+}
+
+func main() {
+	go setup()
+	for g == nil {
+	}
+	print(g.msg)
+}
+</pre>
+
+<p>
+たとえ<code>main</code>が<code>g != nil</code>を観測してループを終了したとしても、
+<code>g.msg</code>の初期値を観測できる保証はありません。
+</p>
+
+<p>
+全ての例における解決策は、明示的な同期方式を使用することです。
+</p>
