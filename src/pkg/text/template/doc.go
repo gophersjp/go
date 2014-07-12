@@ -3,26 +3,25 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package template implements data-driven templates for generating textual output.
+templateパッケージはテキストの出力を生成するデータ駆動テンプレートを実装します。
 
-To generate HTML output, see package html/template, which has the same interface
-as this package but automatically secures HTML output against certain attacks.
+HTMLの出力を生成するには、html/templateパッケージを参照してください。
+html/templateパッケージはこのパッケージと同じインタフェースを備えていますが、
+HTML出力を既知の攻撃から自動的に守ります。
 
-Templates are executed by applying them to a data structure. Annotations in the
-template refer to elements of the data structure (typically a field of a struct
-or a key in a map) to control execution and derive values to be displayed.
-Execution of the template walks the structure and sets the cursor, represented
-by a period '.' and called "dot", to the value at the current location in the
-structure as execution proceeds.
+テンプレートはデータ構造へ適用することで実行されます。
+テンプレート中のアノテーションはデータ構造内の要素(典型的には構造体のフィールド、またはマップのキー)を参照し、実行の制御や値の表示を行います。
+テンプレートの実行はデータ構造内を移動し、実行の進捗を示すために、データ構造内の現在地を示す値にカーソルをセットします。
+カーソルは1つのピリオド'.'で表され、「ドット」と呼ばれます。
 
-The input text for a template is UTF-8-encoded text in any format.
-"Actions"--data evaluations or control structures--are delimited by
-"{{" and "}}"; all text outside actions is copied to the output unchanged.
-Actions may not span newlines, although comments can.
+テンプレートへの入力テキストはフォーマットなしのUTF-8でエンコードされたテキストです。
+データ評価または制御構造である「アクション」は"{{"と"}}"で区切られます。
+アクションの外側のテキストは全てそのまま出力となります。
+アクションは改行はできませんが、コメントは可能です。
 
-Once parsed, a template may be executed safely in parallel.
+一度パースされると、テンプレートは安全に並行して実行できるようになります。
 
-Here is a trivial example that prints "17 items are made of wool".
+以下は"17 items are made of wool"と表示する簡単な例です。
 
 	type Inventory struct {
 		Material string
@@ -34,372 +33,321 @@ Here is a trivial example that prints "17 items are made of wool".
 	err = tmpl.Execute(os.Stdout, sweaters)
 	if err != nil { panic(err) }
 
-More intricate examples appear below.
+この先にはより複雑な例があります。
 
 Actions
 
-Here is the list of actions. "Arguments" and "pipelines" are evaluations of
-data, defined in detail below.
+以下はアクションのリストです。
+データの評価を行う「引数」と「パイプライン」についてはその後で詳細な説明をします。
 
 */
 //	{{/* a comment */}}
-//		A comment; discarded. May contain newlines.
-//		Comments do not nest and must start and end at the
-//		delimiters, as shown here.
+//		コメント: 破棄されます。改行を含むことができます。
+//		コメントはネストできず、ここで示している区切り文字で開始・終了する必要があります。
 /*
 
 	{{pipeline}}
-		The default textual representation of the value of the pipeline
-		is copied to the output.
+		pipelineの値に対するデフォルトのテキスト表現が出力されます。
 
 	{{if pipeline}} T1 {{end}}
-		If the value of the pipeline is empty, no output is generated;
-		otherwise, T1 is executed.  The empty values are false, 0, any
-		nil pointer or interface value, and any array, slice, map, or
-		string of length zero.
-		Dot is unaffected.
+		pipelineの値が空の場合、何も出力されません。
+		そうでない場合、T1が実行されます。
+		空の値とは、false、0、nilポインタまたはインタフェース値、
+		長さがゼロの配列、スライス、マップ、文字列です。
+		ドットは影響を受けません。
 
 	{{if pipeline}} T1 {{else}} T0 {{end}}
-		If the value of the pipeline is empty, T0 is executed;
-		otherwise, T1 is executed.  Dot is unaffected.
+		pipelineの値が空の場合、T0が実行されます。
+		そうでない場合、T1が実行されます。
+		ドットは影響を受けません。
 
 	{{if pipeline}} T1 {{else if pipeline}} T0 {{end}}
-		To simplify the appearance of if-else chains, the else action
-		of an if may include another if directly; the effect is exactly
-		the same as writing
+		if-elseの連鎖が起きないように、elseアクションは他のifを直接含めることができます。
+		この例は次の文とまったく同じ意味になります。
 			{{if pipeline}} T1 {{else}}{{if pipeline}} T0 {{end}}{{end}}
 
 	{{range pipeline}} T1 {{end}}
-		The value of the pipeline must be an array, slice, map, or channel.
-		If the value of the pipeline has length zero, nothing is output;
-		otherwise, dot is set to the successive elements of the array,
-		slice, or map and T1 is executed. If the value is a map and the
-		keys are of basic type with a defined order ("comparable"), the
-		elements will be visited in sorted key order.
+		pipelineの値は配列、スライス、マップ、チャンネルのどれかである必要があります。
+		pipelineの値の長さがゼロの場合、何も出力されません。
+		そうでない場合、配列、スライス、マップ中の次の要素にドットがセットされ、T1が実行されます。
+		値がマップで、キーが整列可能である(「比較可能」である)基本型の値である場合、
+		要素はキーがソートされた順にアクセスされます。
 
 	{{range pipeline}} T1 {{else}} T0 {{end}}
-		The value of the pipeline must be an array, slice, map, or channel.
-		If the value of the pipeline has length zero, dot is unaffected and
-		T0 is executed; otherwise, dot is set to the successive elements
-		of the array, slice, or map and T1 is executed.
+		pipelineの値は配列、スライス、マップ、チャンネルのどれかである必要があります。
+		pipelineの値の長さがゼロの場合、ドットは影響を受けず、T0が実行されます。
+		そうでない場合、配列、スライス、マップ中の次の要素にドットがセットされ、T1が実行されます。
 
 	{{template "name"}}
-		The template with the specified name is executed with nil data.
+		指定された名前のテンプレートがnilデータに対して実行されます。
 
 	{{template "name" pipeline}}
-		The template with the specified name is executed with dot set
-		to the value of the pipeline.
+		ドットがpipelineの値にセットされ、指定された名前のテンプレートが実行されます。
 
 	{{with pipeline}} T1 {{end}}
-		If the value of the pipeline is empty, no output is generated;
-		otherwise, dot is set to the value of the pipeline and T1 is
-		executed.
+		pipelineの値が空の場合、出力は何も生成されません。
+		そうでない場合、ドットがpipelineの値にセットされ、T1が実行されます。
 
 	{{with pipeline}} T1 {{else}} T0 {{end}}
-		If the value of the pipeline is empty, dot is unaffected and T0
-		is executed; otherwise, dot is set to the value of the pipeline
-		and T1 is executed.
+		pipelineの値が空の場合、ドットは影響を受けず、T0が実行されます。
+		そうでない場合、ドットがpipelineの値にセットされ、T1が実行されます。
 
 Arguments
 
-An argument is a simple value, denoted by one of the following.
+引数は以下に示されるような単純な値です。
 
-	- A boolean, string, character, integer, floating-point, imaginary
-	  or complex constant in Go syntax. These behave like Go's untyped
-	  constants, although raw strings may not span newlines.
-	- The keyword nil, representing an untyped Go nil.
-	- The character '.' (period):
+	- Goの文法における真偽値、文字列、文字、数値、浮動小数点数、虚数、複素数の定数。
+	  これらはGoの型指定なしの定数と同じように振る舞いますが、未加工文字列中の改行は無視されます。
+	- nil値。Goの型指定なしのnilと同じです。
+	- ピリオド文字'.':
 		.
-	  The result is the value of dot.
-	- A variable name, which is a (possibly empty) alphanumeric string
-	  preceded by a dollar sign, such as
-		$piOver2
-	  or
-		$
-	  The result is the value of the variable.
-	  Variables are described below.
-	- The name of a field of the data, which must be a struct, preceded
-	  by a period, such as
-		.Field
-	  The result is the value of the field. Field invocations may be
-	  chained:
+	  結果はドットの値です。
+	- 変数名。ドルマークに続く英数字の文字列(なくてもよい)です。例えば以下のようなものです。
+	    $piOver2
+	  あるいは以下のようなものです。
+	    $
+	  結果は変数の値です。
+	  変数については後で説明します。
+	- 構造体のフィールドの名前。以下のように、前にピリオドを付けます。
+	    .Field
+	  結果はフィールドの値です。フィールドは連鎖させることができます:
 	    .Field1.Field2
-	  Fields can also be evaluated on variables, including chaining:
-	    $x.Field1.Field2
-	- The name of a key of the data, which must be a map, preceded
-	  by a period, such as
-		.Key
-	  The result is the map element value indexed by the key.
-	  Key invocations may be chained and combined with fields to any
-	  depth:
+	  フィールドは変数から連鎖させて評価させることもできます:
+	    .$x.Field1.Field2
+	- マップのキーの名前。以下のように、前にピリオドを付けます。
+	    .Key
+	  結果はマップ中のそのキーに対応した要素の値です。
+	  キーはフィールドと組み合わせて何段も連鎖させることができます:
 	    .Field1.Key1.Field2.Key2
-	  Although the key must be an alphanumeric identifier, unlike with
-	  field names they do not need to start with an upper case letter.
-	  Keys can also be evaluated on variables, including chaining:
+	  キーは英数字の名前でなくてはなりませんが、フィールド名のように大文字で始まる必要がありません。
+	  キーは変数から連鎖させて評価させることもできます:
 	    $x.key1.key2
-	- The name of a niladic method of the data, preceded by a period,
-	  such as
-		.Method
-	  The result is the value of invoking the method with dot as the
-	  receiver, dot.Method(). Such a method must have one return value (of
-	  any type) or two return values, the second of which is an error.
-	  If it has two and the returned error is non-nil, execution terminates
-	  and an error is returned to the caller as the value of Execute.
-	  Method invocations may be chained and combined with fields and keys
-	  to any depth:
+	- 引数なしのメソッド。以下のように、前にピリオドを付けます。
+	    .Method
+	  結果はドットをレシーバとしてドット.Method()を実行した結果になります。
+	  このようなメソッドは任意の型の戻り値1つか、第2戻り値としてerrorを加えた2つの戻り値を返す必要があります。
+	  戻り値が2つでerrorが非nilであれば、実行結果はエラーとなります。
+	  メソッドの呼び出しはフィールドやキーと組み合わせて何段も連鎖させることができます:
 	    .Field1.Key1.Method1.Field2.Key2.Method2
-	  Methods can also be evaluated on variables, including chaining:
+	  メソッドは変数から連鎖させて評価させることもできます"
 	    $x.Method1.Field
-	- The name of a niladic function, such as
-		fun
-	  The result is the value of invoking the function, fun(). The return
-	  types and values behave as in methods. Functions and function
-	  names are described below.
-	- A parenthesized instance of one the above, for grouping. The result
-	  may be accessed by a field or map key invocation.
-		print (.F1 arg1) (.F2 arg2)
+	- 引数なしの関数。以下のようなものです。
+	    fun
+	  結果は関数fun()を実行した結果になります。
+	  返される型と値はメソッドの場合と同じ振る舞いです。
+	  関数と関数名は後で説明します。
+	- ここまでに説明したものは丸括弧で囲むとグループになります。
+	  結果はフィールドまたはマップのキー呼び出しによってアクセスできます。
+	    print (.F1 arg1) (.F2 arg2)
 		(.StructValuedMethod "arg").Field
 
-Arguments may evaluate to any type; if they are pointers the implementation
-automatically indirects to the base type when required.
-If an evaluation yields a function value, such as a function-valued
-field of a struct, the function is not invoked automatically, but it
-can be used as a truth value for an if action and the like. To invoke
-it, use the call function, defined below.
+引数は任意の型になります。引数がポインタであれば、必要に応じてベース型になります。
+構造体の関数型フィールドのように、評価によって関数値が生成される場合、その関数は自動的には実行されませんが、ifアクションなどにとってはtrueとして扱われます。
+関数を実行する方法は、以降で示しています。
 
-A pipeline is a possibly chained sequence of "commands". A command is a simple
-value (argument) or a function or method call, possibly with multiple arguments:
+パイプラインは可能な限り「コマンド」のシーケンスをつないだものになります。
+コマンドは単なる値(引数)か、可能な限り複数の引数をとるようにした関数またはメソッドです。
 
 	Argument
-		The result is the value of evaluating the argument.
+		結果は引数の評価値です。
 	.Method [Argument...]
-		The method can be alone or the last element of a chain but,
-		unlike methods in the middle of a chain, it can take arguments.
-		The result is the value of calling the method with the
-		arguments:
-			dot.Method(Argument1, etc.)
+		メソッドは単独か連鎖の最後の要素ですが、連鎖の中間にあるメソッドと違い、引数をとることができます。
+		結果は引数を与えてメソッドを実行した結果になります:
+		    dot.Method(Argument1, etc.)
 	functionName [Argument...]
-		The result is the value of calling the function associated
-		with the name:
-			function(Argument1, etc.)
-		Functions and function names are described below.
+		結果はその名前に紐付いている関数を実行した値になります:
+		    function(Argument1, etc.)
+		関数と関数名については以降で示します。
 
 Pipelines
 
-A pipeline may be "chained" by separating a sequence of commands with pipeline
-characters '|'. In a chained pipeline, the result of the each command is
-passed as the last argument of the following command. The output of the final
-command in the pipeline is the value of the pipeline.
+パイプラインはパイプライン文字'|'で区切ってコマンドをつなげることによって「連鎖」させることができます。
+連鎖されたパイプラインでは、各コマンドの結果は次のコマンドへ最後の引数として渡されます。
+パイプラインにおける最後のコマンドの出力がそのパイプラインの値になります。
 
-The output of a command will be either one value or two values, the second of
-which has type error. If that second value is present and evaluates to
-non-nil, execution terminates and the error is returned to the caller of
-Execute.
+コマンドの出力が1つか2つの場合、2番目の出力はerror型になります。
+もし2つめの値が存在し、評価結果がnilでなければ、実行は終了し、呼び出し元へはエラーが返されます。
 
 Variables
 
-A pipeline inside an action may initialize a variable to capture the result.
-The initialization has syntax
+アクション内のパイプラインは変数を初期化し結果を受け取ることができます。
+初期化の構文は次の通りです。
 
 	$variable := pipeline
 
-where $variable is the name of the variable. An action that declares a
-variable produces no output.
+$variableは変数の名前です。
+変数を宣言するアクションは何も出力しません。
 
-If a "range" action initializes a variable, the variable is set to the
-successive elements of the iteration.  Also, a "range" may declare two
-variables, separated by a comma:
+"range"アクションが変数を初期化する場合、変数にはイテレーションで毎回生成される値がセットされます。
+"range"がカンマで区切った2つの変数を宣言する場合:
 
 	range $index, $element := pipeline
 
-in which case $index and $element are set to the successive values of the
-array/slice index or map key and element, respectively.  Note that if there is
-only one variable, it is assigned the element; this is opposite to the
-convention in Go range clauses.
+この場合、$indexと$elementは、毎回生成される、配列・スライスのインデックスあるいはマップのキーと値がそれぞれセットされます。
+1つだけ変数がある場合は、値がセットされることに注意してください。これはGoのrange式と同様になっています。
 
-A variable's scope extends to the "end" action of the control structure ("if",
-"with", or "range") in which it is declared, or to the end of the template if
-there is no such control structure.  A template invocation does not inherit
-variables from the point of its invocation.
+変数のスコープはそれが宣言された制御構造("if", "with", "range")における"end"アクションまで続きます。
+制御構造がない場合はテンプレートの終わりまで続きます。
+テンプレートは実行された箇所から変数を受け継ぐことはありません。
 
-When execution begins, $ is set to the data argument passed to Execute, that is,
-to the starting value of dot.
+実行が始まった時、$は実行に渡されたデータ引数にセットされます。
+つまり最初の値はドットであるということです。
 
 Examples
 
-Here are some example one-line templates demonstrating pipelines and variables.
-All produce the quoted word "output":
+以下はパイプラインと変数をデモする1行テンプレートの例です。
+これら全てがダブルクオートで囲まれた"output"という語を出力します。
 
 	{{"\"output\""}}
-		A string constant.
+		文字列定数です。
 	{{`"output"`}}
-		A raw string constant.
+		未加工文字列定数です。
 	{{printf "%q" "output"}}
-		A function call.
+		関数呼び出しです。
 	{{"output" | printf "%q"}}
-		A function call whose final argument comes from the previous
-		command.
+		関数呼び出しですが、最後の引数は前のコマンドから受け取っています。
 	{{printf "%q" (print "out" "put")}}
-		A parenthesized argument.
+		カッコで囲まれた引数です。
 	{{"put" | printf "%s%s" "out" | printf "%q"}}
-		A more elaborate call.
+		より複雑な関数呼び出しです。
 	{{"output" | printf "%s" | printf "%q"}}
-		A longer chain.
+		少し長い連鎖です。
 	{{with "output"}}{{printf "%q" .}}{{end}}
-		A with action using dot.
+		ドットを使ったアクションの例です。
 	{{with $x := "output" | printf "%q"}}{{$x}}{{end}}
-		A with action that creates and uses a variable.
+		変数を生成して使用するアクションの例です。
 	{{with $x := "output"}}{{printf "%q" $x}}{{end}}
-		A with action that uses the variable in another action.
+		別のアクションで変数を利用する例です。
 	{{with $x := "output"}}{{$x | printf "%q"}}{{end}}
-		The same, but pipelined.
+		同様の例ですが、パイプラインを使っています。
 
 Functions
 
-During execution functions are found in two function maps: first in the
-template, then in the global function map. By default, no functions are defined
-in the template but the Funcs method can be used to add them.
+実行の間、関数は次の2つの関数マップから探されます:
+1つめはテンプレート中にあるもので、その場合はグローバルな関数マップになります。
+デフォルトではテンプレート内で関数は定義されていませんが、Funcsメソッドによって関数を追加することができます。
 
-Predefined global functions are named as follows.
+あらかじめ定義されたグローバル関数は次のようになっています。
 
 	and
-		Returns the boolean AND of its arguments by returning the
-		first empty argument or the last argument, that is,
-		"and x y" behaves as "if x then y else x". All the
-		arguments are evaluated.
+		引数のAND値を返します。最初の空の引数または最後の引数を返します。
+		つまり、"and x y"は「xが真のときy、そうでなければx」となります。
+		全ての引数は評価されます。
 	call
-		Returns the result of calling the first argument, which
-		must be a function, with the remaining arguments as parameters.
-		Thus "call .X.Y 1 2" is, in Go notation, dot.X.Y(1, 2) where
-		Y is a func-valued field, map entry, or the like.
-		The first argument must be the result of an evaluation
-		that yields a value of function type (as distinct from
-		a predefined function such as print). The function must
-		return either one or two result values, the second of which
-		is of type error. If the arguments don't match the function
-		or the returned error value is non-nil, execution stops.
+		最初の引数の関数に残りの引数をパラメータとして与えて実行した結果を返します。
+		例えば"call .X.Y 1 2"はGoで書くと dot.X.Y(1, 2) となります。Yは関数型のフィールドやマップのエントリ等です。
+		最初の引数は関数型の値(printのような組み込み関数ではないもの)を生成する評価結果でなくてはなりません。
+		関数は1つまたは2つの値を返す必要があり、2番目はerror型になります。
+		引数が関数型でない、あるいは戻り値のerror値がnilでなかった場合、実行は停止します。
 	html
-		Returns the escaped HTML equivalent of the textual
-		representation of its arguments.
+		引数のテキスト表現をエスケープされたHTMLに変換したものを返します。
 	index
-		Returns the result of indexing its first argument by the
-		following arguments. Thus "index x 1 2 3" is, in Go syntax,
-		x[1][2][3]. Each indexed item must be a map, slice, or array.
+		最初の引数を続く引数でインデックスした結果を返します。
+		例えば"index x 1 2 3"はGoの文法では x[1][2][3]となります。
+		インデックスされる値はマップ、スライス、配列である必要があります。
 	js
-		Returns the escaped JavaScript equivalent of the textual
-		representation of its arguments.
+		引数のテキスト表現をエスケープされたJavaScriptに変換したものを返します。
 	len
-		Returns the integer length of its argument.
+		引数の長さを表す整数を返します。
 	not
-		Returns the boolean negation of its single argument.
+		引数を1つ受け取り、その論理否定値を返します。
 	or
-		Returns the boolean OR of its arguments by returning the
-		first non-empty argument or the last argument, that is,
-		"or x y" behaves as "if x then x else y". All the
-		arguments are evaluated.
+		引数のOR値を返します。最初の空の引数または最後の引数を返します。
+		つまり、"or x y"は「xが真のときx、そうでなければy」となります。
+		全ての引数は評価されます。
 	print
-		An alias for fmt.Sprint
+		fmt.Sprintへのエイリアスです。
 	printf
-		An alias for fmt.Sprintf
+		fmt.Sprintfへのエイリアスです。
 	println
-		An alias for fmt.Sprintln
+		fmt.Sprintlnへのエイリアスです。
 	urlquery
-		Returns the escaped value of the textual representation of
-		its arguments in a form suitable for embedding in a URL query.
+		引数のテキスト表現を、URLのクエリとして埋め込み可能な形式に変換して返します。
 
-The boolean functions take any zero value to be false and a non-zero
-value to be true.
+真偽値の関数はゼロ値を受け取るとfalseを、非ゼロ値を受け取るとtrueを返します。
 
-There is also a set of binary comparison operators defined as
-functions:
+以下のような二項比較演算子の関数もあります:
 
 	eq
-		Returns the boolean truth of arg1 == arg2
+		arg1 == arg2ならば真を返します。
 	ne
-		Returns the boolean truth of arg1 != arg2
+		arg1 != arg2ならば真を返します。
 	lt
-		Returns the boolean truth of arg1 < arg2
+		arg1 < arg2ならば真を返します。
 	le
-		Returns the boolean truth of arg1 <= arg2
+		arg1 <= arg2ならば真を返します。
 	gt
-		Returns the boolean truth of arg1 > arg2
+		arg1 > arg2ならば真を返します。
 	ge
-		Returns the boolean truth of arg1 >= arg2
+		arg1 >= arg2ならば真を返します。
 
-For simpler multi-way equality tests, eq (only) accepts two or more
-arguments and compares the second and subsequent to the first,
-returning in effect
+単純な複数比較のテストでは、eq(だけ)は2つ以上の引数を取り、2番目やそれ以降の引数を最初の引数と比較します。
+要するに以下のような結果を返します。
 
 	arg1==arg2 || arg1==arg3 || arg1==arg4 ...
 
-(Unlike with || in Go, however, eq is a function call and all the
-arguments will be evaluated.)
+(Goの||と異なり、eqは関数呼び出しであり、全ての引数は評価されます。)
 
-The comparison functions work on basic types only (or named basic
-types, such as "type Celsius float32"). They implement the Go rules
-for comparison of values, except that size and exact type are
-ignored, so any integer value may be compared with any other integer
-value, any unsigned integer value may be compared with any other
-unsigned integer value, and so on. However, as usual, one may not
-compare an int with a float32 and so on.
+比較関数は基本型(または"type Celsius float32"のように名前を付けた基本型)にのみ有効です。
+これらはGoにおける値の比較を実装していますが、値のサイズと厳密な型は無視されます。
+よってあらゆる整数値同士や符号なし整数値同士などを比較することができます。
+しかしやはり、intとfloat32との比較のようなことはできません。
 
 Associated templates
 
-Each template is named by a string specified when it is created. Also, each
-template is associated with zero or more other templates that it may invoke by
-name; such associations are transitive and form a name space of templates.
+各テンプレートは生成されるときに指定された文字列の名前が付きます。
+また、各テンプレートは名前によって自分が起動した0個以上の他のテンプレートへ関連付けられます。
+このような関連付けは推移的であり、テンプレートの名前空間を形成します。
 
-A template may use a template invocation to instantiate another associated
-template; see the explanation of the "template" action above. The name must be
-that of a template associated with the template that contains the invocation.
+テンプレートは他の関連付けられたテンプレートを起動することによってインスタンス化することができます。
+前述の"template"アクションの説明を見てください。
+名前は起動を行うテンプレートと関連付けられたテンプレートのものである必要があります。
 
 Nested template definitions
 
-When parsing a template, another template may be defined and associated with the
-template being parsed. Template definitions must appear at the top level of the
-template, much like global variables in a Go program.
+テンプレートをパースするとき、他のテンプレートを定義し、パース中のテンプレートと関連付けることができます。
+テンプレートの定義はGoのプログラムにおけるグローバル変数のようにテンプレートのトップレベルに存在しなければなりません。
 
-The syntax of such definitions is to surround each template declaration with a
-"define" and "end" action.
+このような定義の文法は、それぞれのテンプレートの宣言を"define"と"end"で囲みます。
 
-The define action names the template being created by providing a string
-constant. Here is a simple example:
+defineアクションは生成されるテンプレートに文字列定数を使って名前付けをします。
+以下は簡単な例です:
 
 	`{{define "T1"}}ONE{{end}}
 	{{define "T2"}}TWO{{end}}
 	{{define "T3"}}{{template "T1"}} {{template "T2"}}{{end}}
 	{{template "T3"}}`
 
-This defines two templates, T1 and T2, and a third T3 that invokes the other two
-when it is executed. Finally it invokes T3. If executed this template will
-produce the text
+これはT1とT2の2つのテンプレートを定義します。
+そして3つめのT3は他の2つを実行するものです。
+最後にT3を起動します。
+実行するとこのテンプレートは以下のテキストを生成します。
 
 	ONE TWO
 
-By construction, a template may reside in only one association. If it's
-necessary to have a template addressable from multiple associations, the
-template definition must be parsed multiple times to create distinct *Template
-values, or must be copied with the Clone or AddParseTree method.
+組み立てられたテンプレートは1つだけ関連付けに属することができます。
+複数の関連付けから辿れるようにする必要がある場合、テンプレートの定義は個々の*Template型の値を生成するために複数回パースされる必要があります。
+あるいは、CloneかAddParseTreeメソッドを使ってコピーされる必要があります。
 
-Parse may be called multiple times to assemble the various associated templates;
-see the ParseFiles and ParseGlob functions and methods for simple ways to parse
-related templates stored in files.
+パースは関連付けられた個々のテンプレートを組み立てるために複数回実行されます。
+ParseFilesとParseGlob関数およびメソッドを参照してください。
+これらはファイルに保存された関連するテンプレートをパースするためのシンプルな方法を提供します。
 
-A template may be executed directly or through ExecuteTemplate, which executes
-an associated template identified by name. To invoke our example above, we
-might write,
+テンプレートは直接か、名前を指定して関連付けられたテンプレートを実行するExecuteTemplate関数を通して実行されます。
+前述の例を起動するには、以下のように書きます。
 
 	err := tmpl.Execute(os.Stdout, "no data needed")
 	if err != nil {
 		log.Fatalf("execution failed: %s", err)
 	}
 
-or to invoke a particular template explicitly by name,
+または名前を明示して部分テンプレートを実行します。
 
 	err := tmpl.ExecuteTemplate(os.Stdout, "T2", "no data needed")
 	if err != nil {
 		log.Fatalf("execution failed: %s", err)
 	}
 
+本ドキュメントは以下のドキュメントを翻訳しています: https://code.google.com/p/go/source/browse/src/pkg/text/template/doc.go?r=ae48c492cd8d2f2d5c3b728345882a31a085dfcd
 */
 package template
