@@ -30,9 +30,9 @@ build_doc: update_doc ${tr_status} ${APP_CONTENTS}
 .PHONY: update_doc
 update_doc: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
 	#cd ${GOPATH}/src; find code.google.com/p/go.tools -type d -not -path '*/.hg/*'\
-	#	-exec mkdir -p '${_GOROOT}/src/pkg/{}' ';'
+	#	-exec mkdir -p '${_GOROOT}/src/{}' ';'
 	#cd ${GOPATH}/src; find code.google.com/p/go.tools -type f -not -path '*/.hg/*'\
-	#	-exec cp '{}' '${_GOROOT}/src/pkg/{}' ';'
+	#	-exec cp '{}' '${_GOROOT}/src/{}' ';'
 	find */ -type d -not -path '.*' -not -path '_tmp/*' \
 		-exec mkdir -p '${_GOROOT}/{}' ';'
 	find */ -type f -not -path '.*' -not -path '_tmp/*' \
@@ -84,7 +84,7 @@ deploy: ${APP_CONTENTS} ${APP}/godeps
 
 update: ${_GOROOT} ${GOPATH}/src/${GOREPO}/go.tools
 	cd ${_GOROOT};\
-	rm -rf ${_GOROOT}/src/pkg/${GOREPO};\
+	rm -rf ${_GOROOT}/src/${GOREPO};\
 	hg checkout tip -C;\
 	hg --config extensions.purge= clean;\
 	hg pull; hg update tip
