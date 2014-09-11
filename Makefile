@@ -1,4 +1,4 @@
-GODOC_REV=d8700e870053
+GODOC_REV=11bd89d4e1e9a84d4d66c88b7eccfecd66e8f6c9
 GO_VER=go1.3
 
 WORKSPACE:=$(shell pwd)/_tmp
